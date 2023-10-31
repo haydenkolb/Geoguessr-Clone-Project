@@ -35,8 +35,13 @@ const loginEmailPassword = async () => {
   console.log(userCredential.user);
 }
 
-const loginBtn = document.getElementById('loginBtn');
-loginBtn.addEventListener("click", loginEmailPassword);
+const signInForm = document.getElementById('sign-in-form')
+signInForm.addEventListener('submit', (event) => {
+  // Preventing page refresh
+  event.preventDefault()
+  loginEmailPassword()
+})
+
 
 onAuthStateChanged(auth, user => {
   if (user != null) {

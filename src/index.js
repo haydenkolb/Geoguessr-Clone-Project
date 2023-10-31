@@ -1,53 +1,43 @@
-
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, connectAuthEmulator, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+import { initializeApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyD_UQT0nGeyyH6FeLdp9DhdjlfJfOK2m28",
-  authDomain: "robust-tracker-399622.firebaseapp.com",
-  projectId: "robust-tracker-399622",
-  storageBucket: "robust-tracker-399622.appspot.com",
-  messagingSenderId: "568356302154",
-  appId: "1:568356302154:web:f89365fccd0df7a2c3a5b3",
-  measurementId: "G-4RB1MZYQT3"
+  apiKey: "AIzaSyCuQ7U43ZcNkLoBmSLTpK4JoQnqw8Le67c",
+  authDomain: "fir-auth-test-a173f.firebaseapp.com",
+  projectId: "fir-auth-test-a173f",
+  storageBucket: "fir-auth-test-a173f.appspot.com",
+  messagingSenderId: "501028274527",
+  appId: "1:501028274527:web:e397e4e50499746ff4b6ea"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
-
-connectAuthEmulator(auth, "http://localhost:9099");
-
-const loginEmailPassword = async () => {
-  const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
-
-  const emailValue = emailInput.value;
-  const passwordValue = passwordInput.value;
-
-  const userCredential = await signInWithEmailAndPassword(auth, emailValue, passwordValue);
-  console.log(userCredential.user);
-}
 
 const signInForm = document.getElementById('sign-in-form')
 signInForm.addEventListener('submit', (event) => {
   // Preventing page refresh
   event.preventDefault()
-  loginEmailPassword()
+  
+  const emailInput = document.getElementById('email')
+  const passwordInput = document.getElementById('password')
+  // for now only sign up a user
+  createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
+  .then((userCredential) => {
+    // Signed up 
+    const user = userCredential.user;
+    console.log(user)
+    console.log(userCredential)
+    // ...
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    console.log(errorMessage)
+    // ..
+  });
 })
-
-
-onAuthStateChanged(auth, user => {
-  if (user != null) {
-    console.log('logged in!');
-  } else {
-    console.log('No user');
-  }
-});
 

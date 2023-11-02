@@ -26,8 +26,11 @@ all the project dependencies (NPM will create it for you). You should not touch 
 Before running any of the following commands make sure your current working directory is the root of this project (geoguessr-clone-project).
 You also need to have NPM installed to be able to run the commands.
 
-If you haven't installed the project dependencies (Webpack & Firebase) then use this command to install them.  
+If you haven't installed the project dependencies (Webpack, Firebase, Eslint, Airbnb) then use this command to install them.  
 > `npm install`
 
 To build the main.js file run this command. You should run this command everytime after you change the JS in the src folder.  
 > `npm run build`
+
+To use eslint (will fix errors and show errors it can't fix) on a JS file run this command. You should only use it on JS files you write (so only the files in the src folder).
+> `npx eslint --fix <path to JS file here>`

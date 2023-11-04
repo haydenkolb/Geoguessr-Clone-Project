@@ -49,9 +49,9 @@ body {
 }
 
 #gameModeContainer > h1 {
-    padding: 5vw;
+    padding: 5vh;
 }
 
 #solo-difficulty, #multiplayer-modes {
-    padding: 5vw;
+    padding: 5vh;
 }

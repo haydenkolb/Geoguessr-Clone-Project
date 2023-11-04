@@ -16,7 +16,9 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
 const submitTypeInput = document.getElementById('submit-type');
+const gameModeTypeInput = document.getElementById('mode-type');
 
 // Set submitTypeInput's value when sign-in-button is clicked
 document.getElementById('sign-in-button').addEventListener('click', () => {
@@ -27,6 +29,39 @@ document.getElementById('sign-in-button').addEventListener('click', () => {
 document.getElementById('register-button').addEventListener('click', () => {
   submitTypeInput.value = 'register';
 });
+
+// Hide auth container and display the game mode selection form and add event listeners
+function getGamemode() {
+  const authContainer = document.getElementById('authContainer');
+  authContainer.style.display = 'none';
+  const gameModeForm = document.getElementById('game-mode-form');
+  gameModeForm.style.display = 'block';
+
+  document.getElementById('normal-diff').addEventListener('click', () => {
+    gameModeTypeInput.value = 'normal-solo';
+  });
+
+  document.getElementById('hard-diff').addEventListener('click', () => {
+    gameModeTypeInput.value = 'hard-solo';
+  });
+
+  document.getElementById('expert-diff').addEventListener('click', () => {
+    gameModeTypeInput.value = 'expert-solo';
+  });
+
+  document.getElementById('battle-royale').addEventListener('click', () => {
+    gameModeTypeInput.value = 'battle-royale';
+  });
+
+  document.getElementById('hide-and-seek').addEventListener('click', () => {
+    gameModeTypeInput.value = 'hide-and-seek';
+  });
+
+  gameModeForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    console.log(gameModeTypeInput.value);
+  });
+}
 
 // Handle submit event from signInForm
 const signInForm = document.getElementById('sign-in-form');
@@ -45,11 +80,8 @@ signInForm.addEventListener('submit', (event) => {
         const { user } = userCredential;
         console.log('Signed in user', user);
 
-        // Hide auth container and display the game mode selection container
-        const authContainer = document.getElementById('authContainer');
-        authContainer.style.display = 'none';
-        const gameModeContainer = document.getElementById('gameModeContainer');
-        gameModeContainer.style.display = 'block';
+        // Get user entered gamemode
+        getGamemode();
       })
       .catch((error) => {
         const errorMessage = error.message;
@@ -65,11 +97,8 @@ signInForm.addEventListener('submit', (event) => {
         console.log(user);
         console.log(userCredential);
 
-        // Hide auth container and display the game mode selection container
-        const authContainer = document.getElementById('authContainer');
-        authContainer.style.display = 'none';
-        const gameModeContainer = document.getElementById('gameModeContainer');
-        gameModeContainer.style.display = 'block';
+        // Get user entered gamemode
+        getGamemode();
       })
       .catch((error) => {
         const errorMessage = error.message;

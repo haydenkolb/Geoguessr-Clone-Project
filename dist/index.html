@@ -54,24 +54,26 @@
         </form>
 
         <!-- Game mode selection -->
-        <div id="gameModeContainer" class="rounded">
+        <form id="game-mode-form" class="rounded">
             <h1>Select game mode</h1>
             <div>
+                <input type="hidden" id="mode-type" name="mode-type">
+
                 <h2 class="text-center">Solo</h2>
                 <div id="solo-difficulty" class="text-center">
-                    <button type="button" class="btn btn-success btn-lg mr-2">Normal</button>
-                    <button type="button" class="btn btn-warning btn-lg mr-2">Hard</button>
-                    <button type="button" class="btn btn-danger btn-lg">Expert</button>
+                    <button type="submit" class="btn btn-success btn-lg mr-2" id="normal-diff">Normal</button>
+                    <button type="submit" class="btn btn-warning btn-lg mr-2" id="hard-diff">Hard</button>
+                    <button type="submit" class="btn btn-danger btn-lg" id="expert-diff">Expert</button>
                 </div>
             </div>
             <div>
                 <h2 class="text-center">Multiplayer</h2>
                 <div id="multiplayer-modes" class="text-center">
-                    <button type="button" class="btn btn-info btn-lg mr-2">Battle Royale</button>
-                    <button type="button" class="btn btn-info btn-lg">Hide & Seek</button>
+                    <button type="submit" class="btn btn-info btn-lg mr-2" id="battle-royale">Battle Royale</button>
+                    <button type="submit" class="btn btn-info btn-lg" id="hide-and-seek">Hide & Seek</button>
                 </div>
             </div>
-        </div>
+        </form>
         <script src="main.js"></script>
     </body>
 </html>

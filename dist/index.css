@@ -36,7 +36,7 @@ body {
     padding: 3vh;
 }
 
-#gameModeContainer {
+#game-mode-form {
     display: none;
     flex-direction: column;
     row-gap: 5vh;
@@ -48,7 +48,7 @@ body {
     margin: auto;
 }
 
-#gameModeContainer > h1 {
+#game-mode-form > h1 {
     padding: 5vh;
 }
 

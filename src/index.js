@@ -32,8 +32,8 @@ document.getElementById('register-button').addEventListener('click', () => {
 
 // Hide auth container and display the game mode selection form and add event listeners
 function getGamemode() {
-  const authContainer = document.getElementById('authContainer');
-  authContainer.style.display = 'none';
+  const signInForm = document.getElementById('sign-in-form');
+  signInForm.style.display = 'none';
   const gameModeForm = document.getElementById('game-mode-form');
   gameModeForm.style.display = 'block';
 

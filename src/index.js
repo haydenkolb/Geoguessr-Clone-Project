@@ -17,7 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Sign in form submitTypeInput holds value of submitted method
+// Sign in form submitTypeInput holds value of submitted method (sign in / register)
 const submitTypeInput = document.getElementById('submit-type');
 
 // Set submitTypeInput's value when sign-in-button is clicked
@@ -30,13 +30,31 @@ document.getElementById('register-button').addEventListener('click', () => {
   submitTypeInput.value = 'register';
 });
 
-// Declaration of Street view service, map, and panorama variables.
+// Declaration of street view service, map, panorama, and guessMarker variables.
 let sv;
 let map;
 let panorama;
+let guessMarker;
+
+// Places a marker on the guessing map when clicked
+function placeGuessMarker(latLng, map) {
+  // If a marker has been placed already, get rid of it and create a new marker.
+  if (guessMarker !== undefined) {
+    guessMarker.setMap(null);
+    guessMarker = undefined;
+  }
+  // Place a new marker on the guessing map
+  guessMarker = new google.maps.Marker({
+    position: latLng,
+    map: map,
+  });
+  console.log(`Guess marker lat: ${latLng.lat()}`);
+  console.log(`Guess marker lng: ${latLng.lng()}`);
+}
 
 // Callback function for Google maps API
 async function initialize() {
+  /* eslint disable */
   sv = new google.maps.StreetViewService();
   panorama = new google.maps.StreetViewPanorama(
     document.getElementById('pano'),
@@ -55,10 +73,15 @@ async function initialize() {
     streetViewControl: false,
     disableDefaultUI: true,
   });
+
+  // Add click event listener for placing guess marker
+  map.addListener('click', (e) => {
+    placeGuessMarker(e.latLng, map);
+  });
 }
 window.initialize = initialize;
 
-// Generates a random set of coordinates
+// Generates a random set of coordinates and creates a LatLng location
 async function getRandomLocation() {
   const minLat = -90; // Minimum latitude
   const maxLat = 90; // Maximum latitude
@@ -70,21 +93,33 @@ async function getRandomLocation() {
   return location;
 }
 
-function processSVData(loc, rad) {
-  sv.getPanorama({ location: loc, radius: rad }, (data, status) => {
-    console.log(status);
-    if (status === google.maps.StreetViewStatus.ZERO_RESULTS) {
-      processSVData(loc, rad * 10);
-    } else if (status === google.maps.StreetViewStatus.OK) {
-      panorama.setPano(data.location.pano);
-      panorama.setPov({
-        heading: 270,
-        pitch: 0,
-      });
-      panorama.setVisible(true);
-    } else {
-      console.alert('Error getting panoramic street view');
-    }
+// Find a panorama given a set of coordinates and a radius
+async function processSVData(loc, rad) {
+  return new Promise((resolve, reject) => {
+    sv.getPanorama({ location: loc, radius: rad }, async (data, status) => {
+      console.log(status);
+      if (status === google.maps.StreetViewStatus.ZERO_RESULTS) {
+        // If there are no panoramic street views at this spot, retry with a higher radius
+        resolve(await processSVData(loc, rad * 10));
+      } else if (status === google.maps.StreetViewStatus.OK) {
+        console.log(data);
+        console.log(data.copyright);
+        // A panoramic street view was found, create the panorama & send the updated coordinates
+        const newLatLng = data.location.latLng;
+        const newLat = newLatLng.lat();
+        const newLng = newLatLng.lng();
+        panorama.setPano(data.location.pano);
+        panorama.setPov({
+          heading: 270,
+          pitch: 0,
+        });
+        panorama.setVisible(true);
+        resolve({ newLat, newLng });
+      } else {
+        console.error('Error getting panoramic street view');
+        reject(new Error('Error getting panoramic street view'));
+      }
+    });
   });
 }
 
@@ -94,14 +129,22 @@ async function playSoloGame(roundDuration, round) {
 
   // Generate a random location for this round
   const location = await getRandomLocation();
-  console.log('Location' + location);
+  console.log(`Generated Location ${location}`);
 
+  // Display the map and panorama
   const map = document.getElementById('map');
   map.style.display = 'block';
   const panorama = document.getElementById('pano');
   panorama.style.display = 'block';
 
-  processSVData(location, 100);
+  // Find a panoramic street view given the generated location and initial search radius of 100
+  const locationData = await processSVData(location, 100);
+
+  // Store the latitude & longitude values for the panoramic street view location that was found
+  const latitude = locationData.newLat;
+  const longitude = locationData.newLng;
+  console.log(`New lat ${latitude}`);
+  console.log(`New lng ${longitude}`);
 }
 // Game mode selection form gameModeTypeInput holds value of submitted game type
 const gameModeTypeInput = document.getElementById('mode-type');

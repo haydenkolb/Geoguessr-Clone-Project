@@ -35,51 +35,149 @@ let sv;
 let map;
 let panorama;
 let guessMarker;
+let locationMarker;
+
+// Declaration of latitude and longitude variables
+let newLat;
+let newLng;
+let guessLat;
+let guessLng;
+
+// Calculate the score given the distance from the location
+function calculateScore(distance) {
+  const maxScore = 5000;
+  const maxDistance = 5000;
+
+  const score = maxScore * (1 - distance / maxDistance);
+  return Math.max(0, Math.round(score));
+}
+
+// Helper function for haversine distance
+function toRadians(angle) {
+  return angle * (Math.PI / 180);
+}
+
+// Haversine distance function returns the distance of the guess to the actual location
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRadians(lat1))
+   * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c;
+  return d;
+}
+
+// Guessing button
+const guessButton = document.getElementById('guess-button');
+
+// Score overlay
+const scoreOverlay = document.getElementById('score-overlay');
+
+// Timer
+const timer = document.getElementById('timer');
+
+const timeRemaining = document.getElementById('time-remaining');
+let intervalId;
+
+// Timer function displays the time left
+function startTimer(roundDuration, onEnd) {
+  let time = roundDuration;
+  let minutes;
+  let seconds;
+
+  intervalId = setInterval(() => {
+    minutes = parseInt(time / 60, 10);
+    seconds = parseInt(time % 60, 10);
+
+    minutes = minutes < 10 ? `0${minutes}` : minutes;
+    seconds = seconds < 10 ? `0${seconds}` : seconds;
+
+    timeRemaining.innerHTML = `${minutes}:${seconds}`;
+
+    if (time <= 0) {
+      clearInterval(intervalId);
+      onEnd();
+    }
+    time -= 1;
+  }, 1000);
+}
+
+// Function stops the timer
+function stopTimer() {
+  if (intervalId !== undefined) {
+    console.log(`Stopping timer ${intervalId}`);
+    clearInterval(intervalId);
+    intervalId = undefined;
+  }
+}
 
 // Places a marker on the guessing map when clicked
-function placeGuessMarker(latLng, map) {
+function placeGuessMarker(latLng) {
   // If a marker has been placed already, get rid of it and create a new marker.
+  if (guessButton.style.display !== 'block') {
+    guessButton.style.display = 'block';
+  }
   if (guessMarker !== undefined) {
     guessMarker.setMap(null);
     guessMarker = undefined;
   }
   // Place a new marker on the guessing map
+  // eslint-disable-next-line no-undef
   guessMarker = new google.maps.Marker({
     position: latLng,
-    map: map,
+    map,
+    icon: 'icons/map-marker.png',
   });
   console.log(`Guess marker lat: ${latLng.lat()}`);
   console.log(`Guess marker lng: ${latLng.lng()}`);
+  guessLat = latLng.lat();
+  guessLng = latLng.lng();
 }
 
 // Callback function for Google maps API
 async function initialize() {
-  /* eslint disable */
+  // eslint-disable-next-line no-undef
   sv = new google.maps.StreetViewService();
+  // eslint-disable-next-line no-undef
   panorama = new google.maps.StreetViewPanorama(
     document.getElementById('pano'),
   );
-
   // Disable the road names that are displayed in the panoramic street view by default
   panorama.setOptions({
     showRoadLabels: false,
     addressControl: false,
   });
-
   // Set up the guessing map
+  // eslint-disable-next-line no-undef
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 0, lng: 0 },
     zoom: 1,
     streetViewControl: false,
     disableDefaultUI: true,
+    clickableIcons: false,
   });
-
-  // Add click event listener for placing guess marker
+  // Add click event listener for placing guess marker & display the 'Make Guess' button
   map.addListener('click', (e) => {
-    placeGuessMarker(e.latLng, map);
+    placeGuessMarker(e.latLng);
   });
 }
 window.initialize = initialize;
+
+// Check if the randomly generated location is on land
+async function isLandLocation(lat, lng) {
+  // Call the reverse geocoding API and check the response for the given location
+  const apiKey = 'AIzaSyD_UQT0nGeyyH6FeLdp9DhdjlfJfOK2m28';
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`,
+  );
+  const data = await response.json();
+  console.log(data);
+  const isLand = data.results.length > 0 && (data.results[0].address_components.length > 1);
+  console.log(`isLand: ${isLand}`);
+  return isLand;
+}
 
 // Generates a random set of coordinates and creates a LatLng location
 async function getRandomLocation() {
@@ -87,27 +185,35 @@ async function getRandomLocation() {
   const maxLat = 90; // Maximum latitude
   const minLng = -180; // Minimum longitude
   const maxLng = 180; // Maximum longitude
-  const randomLat = Math.random() * (maxLat - minLat) + minLat;
-  const randomLng = Math.random() * (maxLng - minLng) + minLng;
+  let randomLat;
+  let randomLng;
+  // Generate a location that is on land
+  do {
+    randomLat = Math.random() * (maxLat - minLat) + minLat;
+    randomLng = Math.random() * (maxLng - minLng) + minLng;
+  // eslint-disable-next-line no-await-in-loop
+  } while (!(await isLandLocation(randomLat, randomLng)));
+  // eslint-disable-next-line no-undef
   const location = await new google.maps.LatLng(randomLat, randomLng);
   return location;
 }
 
-// Find a panorama given a set of coordinates and a radius
+// Find a panorama given a set of coordinates and a search radius
 async function processSVData(loc, rad) {
   return new Promise((resolve, reject) => {
     sv.getPanorama({ location: loc, radius: rad }, async (data, status) => {
       console.log(status);
+      // eslint-disable-next-line no-undef
       if (status === google.maps.StreetViewStatus.ZERO_RESULTS) {
         // If there are no panoramic street views at this spot, retry with a higher radius
         resolve(await processSVData(loc, rad * 10));
+      // eslint-disable-next-line no-undef
       } else if (status === google.maps.StreetViewStatus.OK) {
         console.log(data);
-        console.log(data.copyright);
         // A panoramic street view was found, create the panorama & send the updated coordinates
         const newLatLng = data.location.latLng;
-        const newLat = newLatLng.lat();
-        const newLng = newLatLng.lng();
+        newLat = newLatLng.lat();
+        newLng = newLatLng.lng();
         panorama.setPano(data.location.pano);
         panorama.setPov({
           heading: 270,
@@ -123,28 +229,182 @@ async function processSVData(loc, rad) {
   });
 }
 
-async function playSoloGame(roundDuration, round) {
-  // TODO
-  // Run the game with specified roundDuration & increment round after each round ends
+// Initialize MAX_ROUNDS
+const MAX_ROUNDS = 5;
 
-  // Generate a random location for this round
-  const location = await getRandomLocation();
-  console.log(`Generated Location ${location}`);
+// Initialize roundScore
+let roundScore;
+
+// Get the elements from the page
+const roundScoreP = document.getElementById('round-score');
+const gameContainer = document.getElementById('game-container');
+const originalMap = document.getElementById('map');
+
+// Store the initial layout of the map for rearranging later
+const initialPosition = {
+  position: originalMap.style.position,
+  top: originalMap.style.top,
+  left: originalMap.style.left,
+  transform: originalMap.style.transform,
+  bottom: originalMap.style.bottom,
+  right: originalMap.style.right,
+};
+
+async function playSoloGame(roundDuration, round, scoreAccumulated) {
+  // Add the event listener to the make guess button
+  // eslint-disable-next-line no-use-before-define
+  guessButton.addEventListener('click', handleGuessClick);
+  console.log(`playSoloGame called with roundDuration, round, scoreAccumulated\n ${roundDuration} , ${round} , ${scoreAccumulated}`);
 
   // Display the map and panorama
-  const map = document.getElementById('map');
-  map.style.display = 'block';
-  const panorama = document.getElementById('pano');
-  panorama.style.display = 'block';
+  const mapDiv = document.getElementById('map');
+  mapDiv.style.display = 'block';
+  const panoramaDiv = document.getElementById('pano');
+  panoramaDiv.style.display = 'flex';
 
-  // Find a panoramic street view given the generated location and initial search radius of 100
+  // Generate a new location
+  const location = await getRandomLocation();
+
+  // Obtain a panoramic view
   const locationData = await processSVData(location, 100);
 
-  // Store the latitude & longitude values for the panoramic street view location that was found
+  // Display and reset timer
+  timer.style.display = 'block';
+  stopTimer();
+
+  // Store latitude and logitude of the actual location for placing locationMarker
+  // eslint-disable-next-line no-unused-vars
   const latitude = locationData.newLat;
+  // eslint-disable-next-line no-unused-vars
   const longitude = locationData.newLng;
-  console.log(`New lat ${latitude}`);
-  console.log(`New lng ${longitude}`);
+
+  // Initialize roundScore
+  roundScore = 0;
+
+  // Create a dynamic event listener for the make guess button
+  // Function executes when make guess button is clicked
+  function handleGuessClick() {
+    stopTimer();
+    guessButton.removeEventListener('click', handleGuessClick);
+
+    const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
+    guessLat = undefined;
+    guessLng = undefined;
+    roundScore = calculateScore(distance);
+    timer.style.display = 'none';
+    guessButton.style.display = 'none';
+    scoreOverlay.style.display = 'block';
+    // eslint-disable-next-line no-param-reassign
+    scoreAccumulated += roundScore;
+    roundScoreP.innerHTML = `Score for this round is ${roundScore}<br>Your overall score is ${scoreAccumulated}`;
+    // Move the map to the scoreOverlay
+    scoreOverlay.appendChild(originalMap);
+    originalMap.style.position = 'absolute';
+    originalMap.style.top = '60%';
+    originalMap.style.left = '50%';
+    originalMap.style.transform = 'translate(-50%, -50%)';
+
+    // Add the locationMarker and pan to it
+    // eslint-disable-next-line no-undef
+    locationMarker = new google.maps.Marker({
+      position: location,
+      map,
+    });
+    map.panTo(locationMarker.position);
+    const distanceP = document.getElementById('distance');
+    distanceP.innerHTML = `Guess was ${Math.round(distance)} km away from the location`;
+
+    // After 5 second intermission between rounds, reset the page and play next round
+    setTimeout(() => {
+      scoreOverlay.style.display = 'none';
+      timer.style.display = 'block';
+      locationMarker.setMap(null);
+      locationMarker = undefined;
+      if (guessMarker !== undefined) {
+        guessMarker.setMap(null);
+        guessMarker = undefined;
+      }
+      gameContainer.appendChild(originalMap);
+      originalMap.style.position = initialPosition.position;
+      originalMap.style.top = initialPosition.top;
+      originalMap.style.left = initialPosition.left;
+      originalMap.style.transform = initialPosition.transform;
+      originalMap.style.bottom = initialPosition.bottom;
+      originalMap.style.right = initialPosition.right;
+
+      if (round < MAX_ROUNDS) {
+        playSoloGame(roundDuration, round + 1, scoreAccumulated);
+      }
+    }, 5000);
+  }
+
+  startTimer(roundDuration, () => {
+    // Callback function executes when make guess button is not clicked during the round
+    stopTimer();
+    guessButton.removeEventListener('click', handleGuessClick);
+    timer.style.display = 'none';
+    guessButton.style.display = 'none';
+    scoreOverlay.style.display = 'block';
+    // If there is a guess marker placed but the button was not pressed, score that guess
+    if (guessLat !== undefined && guessLng !== undefined) {
+      const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
+      guessLat = undefined;
+      guessLng = undefined;
+      roundScore = calculateScore(distance);
+      // eslint-disable-next-line no-param-reassign
+      scoreAccumulated += roundScore;
+      roundScoreP.innerHTML = `Score for this round is ${roundScore}<br>Your overall score is ${scoreAccumulated}`;
+
+      scoreOverlay.appendChild(originalMap);
+      originalMap.style.position = 'absolute';
+      originalMap.style.top = '50%';
+      originalMap.style.left = '50%';
+      originalMap.style.transform = 'translate(-50%, -50%)';
+      // eslint-disable-next-line no-undef
+      locationMarker = new google.maps.Marker({
+        position: location,
+        map,
+      });
+      map.panTo(locationMarker.position);
+      const distanceP = document.getElementById('distance');
+      distanceP.innerHTML = `Guess was ${Math.round(distance)} km away from the location`;
+    } else {
+      roundScoreP.innerHTML = 'Guessing time ran out!';
+      scoreOverlay.appendChild(originalMap);
+      originalMap.style.position = 'absolute';
+      originalMap.style.top = '60%';
+      originalMap.style.left = '50%';
+      originalMap.style.transform = 'translate(-50%, -50%)';
+      // eslint-disable-next-line no-undef
+      locationMarker = new google.maps.Marker({
+        position: location,
+        map,
+      });
+      map.panTo(locationMarker.position);
+    }
+    // After 5 second intermission between rounds, reset the page and play next round
+    setTimeout(() => {
+      scoreOverlay.style.display = 'none';
+      timer.style.display = 'block';
+      gameContainer.appendChild(originalMap);
+      locationMarker.setMap(null);
+      locationMarker = undefined;
+      if (guessMarker !== undefined) {
+        guessMarker.setMap(null);
+        guessMarker = undefined;
+      }
+      originalMap.style.position = initialPosition.position;
+      originalMap.style.top = initialPosition.top;
+      originalMap.style.left = initialPosition.left;
+      originalMap.style.transform = initialPosition.transform;
+      originalMap.style.bottom = initialPosition.bottom;
+      originalMap.style.right = initialPosition.right;
+
+      if (round < MAX_ROUNDS) {
+        playSoloGame(roundDuration, round + 1, scoreAccumulated);
+      }
+    }, 5000);
+  });
 }
 // Game mode selection form gameModeTypeInput holds value of submitted game type
 const gameModeTypeInput = document.getElementById('mode-type');
@@ -188,15 +448,15 @@ function getGamemode() {
     switch (gameMode) {
       case 'normal-solo':
         roundDuration = 120;
-        playSoloGame(roundDuration, 1);
+        playSoloGame(roundDuration, 1, 0);
         break;
       case 'hard-solo':
         roundDuration = 60;
-        playSoloGame(roundDuration, 1);
+        playSoloGame(roundDuration, 1, 0);
         break;
       case 'expert-solo':
         roundDuration = 30;
-        playSoloGame(roundDuration, 1);
+        playSoloGame(roundDuration, 1, 0);
         break;
       case 'battle-royale':
         // TODO

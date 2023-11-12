@@ -78,7 +78,16 @@
         <!-- Google Map and Panoramic view -->
         <div id="game-container">
             <div id="map"></div>
-            <div id="pano"></div>
+            <div id="pano">
+                <div id="timer">
+                    <p id="time-remaining"></p>
+                </div>
+                <div id="score-overlay">
+                    <p id="round-score"></p>
+                    <p id="distance"></p>
+                </div>
+            </div>
+            <button class="btn btn-success" id="guess-button">Make Guess</button>
         </div>
         
         <script src="main.js"></script>

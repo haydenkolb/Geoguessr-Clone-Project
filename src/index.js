@@ -237,8 +237,11 @@ let roundScore;
 
 // Get the elements from the page
 const roundScoreP = document.getElementById('round-score');
+const distanceP = document.getElementById('distance');
 const gameContainer = document.getElementById('game-container');
 const originalMap = document.getElementById('map');
+const mapDiv = document.getElementById('map');
+const panoramaDiv = document.getElementById('pano');
 
 // Store the initial layout of the map for rearranging later
 const initialPosition = {
@@ -250,6 +253,15 @@ const initialPosition = {
   right: originalMap.style.right,
 };
 
+function endSoloGame(scoreAccumulated) {
+  timer.style.display = 'none';
+  guessButton.style.display = 'none';
+  scoreOverlay.style.display = 'block';
+  mapDiv.style.display = 'none';
+  distanceP.innerHTML = '';
+  roundScoreP.innerHTML = `Game over.<br>Your score for this game is <span style="color:purple">${scoreAccumulated}</span>`;
+}
+
 async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Add the event listener to the make guess button
   // eslint-disable-next-line no-use-before-define
@@ -257,9 +269,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   console.log(`playSoloGame called with roundDuration, round, scoreAccumulated\n ${roundDuration} , ${round} , ${scoreAccumulated}`);
 
   // Display the map and panorama
-  const mapDiv = document.getElementById('map');
   mapDiv.style.display = 'block';
-  const panoramaDiv = document.getElementById('pano');
   panoramaDiv.style.display = 'flex';
 
   // Generate a new location
@@ -296,7 +306,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     scoreOverlay.style.display = 'block';
     // eslint-disable-next-line no-param-reassign
     scoreAccumulated += roundScore;
-    roundScoreP.innerHTML = `Score for this round is ${roundScore}<br>Your overall score is ${scoreAccumulated}`;
+    roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
     // Move the map to the scoreOverlay
     scoreOverlay.appendChild(originalMap);
     originalMap.style.position = 'absolute';
@@ -311,8 +321,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       map,
     });
     map.panTo(locationMarker.position);
-    const distanceP = document.getElementById('distance');
-    distanceP.innerHTML = `Guess was ${Math.round(distance)} km away from the location`;
+    distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
 
     // After 5 second intermission between rounds, reset the page and play next round
     setTimeout(() => {
@@ -334,6 +343,8 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
 
       if (round < MAX_ROUNDS) {
         playSoloGame(roundDuration, round + 1, scoreAccumulated);
+      } else {
+        endSoloGame(scoreAccumulated);
       }
     }, 5000);
   }
@@ -353,21 +364,21 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       roundScore = calculateScore(distance);
       // eslint-disable-next-line no-param-reassign
       scoreAccumulated += roundScore;
-      roundScoreP.innerHTML = `Score for this round is ${roundScore}<br>Your overall score is ${scoreAccumulated}`;
+      roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
 
       scoreOverlay.appendChild(originalMap);
       originalMap.style.position = 'absolute';
       originalMap.style.top = '50%';
       originalMap.style.left = '50%';
       originalMap.style.transform = 'translate(-50%, -50%)';
+      // Add the locationMarker and pan to it
       // eslint-disable-next-line no-undef
       locationMarker = new google.maps.Marker({
         position: location,
         map,
       });
       map.panTo(locationMarker.position);
-      const distanceP = document.getElementById('distance');
-      distanceP.innerHTML = `Guess was ${Math.round(distance)} km away from the location`;
+      distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
     } else {
       roundScoreP.innerHTML = 'Guessing time ran out!';
       scoreOverlay.appendChild(originalMap);
@@ -381,6 +392,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
         map,
       });
       map.panTo(locationMarker.position);
+      distanceP.innerHTML = '';
     }
     // After 5 second intermission between rounds, reset the page and play next round
     setTimeout(() => {
@@ -402,6 +414,8 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
 
       if (round < MAX_ROUNDS) {
         playSoloGame(roundDuration, round + 1, scoreAccumulated);
+      } else {
+        endSoloGame(scoreAccumulated);
       }
     }, 5000);
   });

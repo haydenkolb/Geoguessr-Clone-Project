@@ -34,3 +34,25 @@ To build the main.js file run this command. You should run this command everytim
 
 To use eslint (will fix errors and show errors it can't fix) on a JS file run this command. You should only use it on JS files you write (so only the files in the src folder).
 > `npx eslint --fix <path to JS file here>`
+
+## Firebase Emulators for Auth & RTDB
+Note, it is not necessary to install the emulators. If you want to just keep connecting directly to Firebase, then that is fine and just ignore the following.
+
+Install the Firebase CLI via npm by running the following command. The -g means it will be installed globally not locally (not in the project folder).
+> `npm install -g firebase-tools`
+
+#### Warning:
+The following commands may not work on the Vscode terminal, but they should work on the command prompt (not sure what it is in MacOS, but its this in Windows). If you do run these commands in the command prompt, make sure to **change your directory to the root of this project** before running them.
+
+Log in to Firebase.
+> `firebase login`
+
+To install the emulators run the following command. You will be prompted questions by the console. Enter yes or leave the default (press enter) for the questions. You can read them if you want, they are fairly easy to understand.
+> `firebase init emulators`
+
+To start up the emulators run the following command. After running this command, this link `http://127.0.0.1:4000/` should show up on the console. It is the link to the emulator UI. Note, you still need to add code that connects to the emulators to the JS (functions bellow).
+> `firebase emulators:start`
+
+### Functions for connecting to the emulators
+* connectDatabaseEmulator(db, "127.0.0.1", 9000)
+* connectAuthEmulator(auth, "http://127.0.0.1:9099")

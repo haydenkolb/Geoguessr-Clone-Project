@@ -2,7 +2,7 @@
 
 ## Project Structure
 
-### dist Folder
+### dist folder
 The dist folder contains the index.css, the index.html, and the main.js. This folder contains our scource code for css, and html, but not js.
 You can change the code on the html and css files but not the js file. And you can open up the live server by using the index.html that is in this folder.  
 
@@ -20,6 +20,10 @@ The webpack.config.js is just a file used to configure webpack. No need to touch
 This folder will contain the project dependencies (Wepback & Firebase code/modules/libraries).
 The node_modules folder does not show up on Github because it is on the git ignore list. However, you will see it in your local repository when you install
 all the project dependencies (NPM will create it for you). You should not touch it. 
+
+### Firebase files in root
+The database.rules.json is where we can put our RTDB rules. If your using the emulator, these rules will be applied to emulated RTDB. If not, then you will 
+need to copy and paste these rules in your FB app. The firebase.json file tells the emulators what ports to be on, what file has the RTDB rules, and other things. The firebasesrc file has nothing in it for now. But we can later use it for deploying our website to firebase servers, if we want to do this.  
 
 
 ## Terminal Commands

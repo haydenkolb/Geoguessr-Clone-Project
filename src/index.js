@@ -242,6 +242,7 @@ const gameContainer = document.getElementById('game-container');
 const originalMap = document.getElementById('map');
 const mapDiv = document.getElementById('map');
 const panoramaDiv = document.getElementById('pano');
+const playAgainButton = document.getElementById('play-again');
 
 // Store the initial layout of the map for rearranging later
 const initialPosition = {
@@ -259,7 +260,17 @@ function endSoloGame(scoreAccumulated) {
   scoreOverlay.style.display = 'block';
   mapDiv.style.display = 'none';
   distanceP.innerHTML = '';
+  playAgainButton.style.display = 'block';
+
   roundScoreP.innerHTML = `Game over.<br>Your score for this game is <span style="color:purple">${scoreAccumulated}</span>`;
+  function handlePlayAgain() {
+    scoreOverlay.style.display = 'none';
+    playAgainButton.style.display = 'none';
+    // eslint-disable-next-line no-use-before-define
+    getGamemode();
+    playAgainButton.removeEventListener('click', handlePlayAgain);
+  }
+  playAgainButton.addEventListener('click', handlePlayAgain);
 }
 
 async function playSoloGame(roundDuration, round, scoreAccumulated) {
@@ -431,25 +442,46 @@ function getGamemode() {
   const gameModeForm = document.getElementById('game-mode-form');
   gameModeForm.style.display = 'block';
 
-  // Event listeners for game mode selection buttons
-  document.getElementById('normal-diff').addEventListener('click', () => {
-    gameModeTypeInput.value = 'normal-solo';
-  });
-  document.getElementById('hard-diff').addEventListener('click', () => {
-    gameModeTypeInput.value = 'hard-solo';
-  });
-  document.getElementById('expert-diff').addEventListener('click', () => {
-    gameModeTypeInput.value = 'expert-solo';
-  });
-  document.getElementById('battle-royale').addEventListener('click', () => {
-    gameModeTypeInput.value = 'battle-royale';
-  });
-  document.getElementById('hide-and-seek').addEventListener('click', () => {
-    gameModeTypeInput.value = 'hide-and-seek';
-  });
+  // Hide the map, panorama, and play again button
+  mapDiv.style.display = 'none';
+  panoramaDiv.style.display = 'none';
+  playAgainButton.style.display = 'none';
 
-  // Submit event listener for gamemode selection form
-  gameModeForm.addEventListener('submit', (event) => {
+  // Get the buttons
+  const normalDiffButton = document.getElementById('normal-diff');
+  const hardDiffButton = document.getElementById('hard-diff');
+  const expertDiffButton = document.getElementById('expert-diff');
+  const battleRoyaleButton = document.getElementById('battle-royale');
+  const hideAndSeekButton = document.getElementById('hide-and-seek');
+
+  // Define the event listener functions for the buttons
+  function handleNormalDiff() {
+    gameModeTypeInput.value = 'normal-solo';
+  }
+  function handleHardDiff() {
+    gameModeTypeInput.value = 'hard-solo';
+  }
+  function handleExpertDiff() {
+    gameModeTypeInput.value = 'expert-solo';
+  }
+  function handleBattleRoyale() {
+    gameModeTypeInput.value = 'battle-royale';
+  }
+  function handleHideAndSeek() {
+    gameModeTypeInput.value = 'hide-and-seek';
+  }
+
+  // Game mode form submit event handler function
+  function handleSubmit(event) {
+    // Function removes the event listeners for each button
+    function removeEventListeners() {
+      normalDiffButton.removeEventListener('click', handleNormalDiff);
+      hardDiffButton.removeEventListener('click', handleHardDiff);
+      expertDiffButton.removeEventListener('click', handleExpertDiff);
+      battleRoyaleButton.removeEventListener('click', handleBattleRoyale);
+      hideAndSeekButton.removeEventListener('click', handleHideAndSeek);
+      gameModeForm.removeEventListener('submit', handleSubmit);
+    }
     event.preventDefault();
     console.log(gameModeTypeInput.value);
     const gameMode = gameModeTypeInput.value;
@@ -484,7 +516,19 @@ function getGamemode() {
         console.log('default case');
         break;
     }
-  });
+    // Remove the event listeners to avoid multiple copies of the same listeners
+    removeEventListeners();
+  }
+
+  // Add the event listeners to the buttons
+  normalDiffButton.addEventListener('click', handleNormalDiff);
+  hardDiffButton.addEventListener('click', handleHardDiff);
+  expertDiffButton.addEventListener('click', handleExpertDiff);
+  battleRoyaleButton.addEventListener('click', handleBattleRoyale);
+  hideAndSeekButton.addEventListener('click', handleHideAndSeek);
+
+  // Add submit event listener for gamemode selection form
+  gameModeForm.addEventListener('submit', handleSubmit);
 }
 
 // Handle submit event from signInForm

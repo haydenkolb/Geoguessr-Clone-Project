@@ -123,3 +123,10 @@ body {
     margin: auto;
     border-radius: 40px;
 }
+
+#play-again {
+    display: none;
+    margin: auto;
+    margin-top: 50vh;
+    padding: 30px;
+}

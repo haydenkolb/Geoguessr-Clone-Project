@@ -273,6 +273,13 @@ function endSoloGame(scoreAccumulated) {
   playAgainButton.addEventListener('click', handlePlayAgain);
 }
 
+// Reset map function recenters the map
+function resetMap() {
+  const center = { lat: 0, lng: 0 };
+  map.setCenter(center);
+  map.setZoom(1);
+}
+
 async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Add the event listener to the make guess button
   // eslint-disable-next-line no-use-before-define
@@ -353,6 +360,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       originalMap.style.right = initialPosition.right;
 
       if (round < MAX_ROUNDS) {
+        resetMap();
         playSoloGame(roundDuration, round + 1, scoreAccumulated);
       } else {
         endSoloGame(scoreAccumulated);
@@ -424,6 +432,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       originalMap.style.right = initialPosition.right;
 
       if (round < MAX_ROUNDS) {
+        resetMap();
         playSoloGame(roundDuration, round + 1, scoreAccumulated);
       } else {
         endSoloGame(scoreAccumulated);

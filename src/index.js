@@ -165,6 +165,7 @@ async function initialize() {
     placeGuessMarker(e.latLng);
   });
   map.addListener('touchstart', (e) => {
+    e.preventDefault();
     placeGuessMarker(e.latLng);
   });
 }

@@ -86,7 +86,7 @@ body {
     z-index: 2;
     position: absolute;
     right: 90px;
-    bottom: 290px;
+    bottom: 35vh;
 }
 
 #timer {

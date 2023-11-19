@@ -313,7 +313,6 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Add the event listener to the make guess button
   // eslint-disable-next-line no-use-before-define
   guessButton.addEventListener('click', handleGuessClick);
-  guessButton.addEventListener('touchstart', handleGuessClick);
   console.log(`playSoloGame called with roundDuration, round, scoreAccumulated\n ${roundDuration} , ${round} , ${scoreAccumulated}`);
 
   // Display the map and panorama
@@ -345,7 +344,6 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   function handleGuessClick() {
     stopTimer();
     guessButton.removeEventListener('click', handleGuessClick);
-    guessButton.removeEventListener('touchstart', handleGuessClick);
 
     const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
     createLine(latitude, longitude, guessLat, guessLng);
@@ -406,7 +404,6 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     // Callback function executes when make guess button is not clicked during the round
     stopTimer();
     guessButton.removeEventListener('click', handleGuessClick);
-    guessButton.removeEventListener('touchstart', handleGuessClick);
     timer.style.display = 'none';
     guessButton.style.display = 'none';
     scoreOverlay.style.display = 'block';

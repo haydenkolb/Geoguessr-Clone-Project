@@ -158,9 +158,13 @@ async function initialize() {
     streetViewControl: false,
     disableDefaultUI: true,
     clickableIcons: false,
+    gestureHandling: 'greedy',
   });
   // Add click event listener for placing guess marker & display the 'Make Guess' button
   map.addListener('click', (e) => {
+    placeGuessMarker(e.latLng);
+  });
+  map.addListener('touchstart', (e) => {
     placeGuessMarker(e.latLng);
   });
 }

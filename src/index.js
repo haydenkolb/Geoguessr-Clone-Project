@@ -37,11 +37,12 @@ let panorama;
 let guessMarker;
 let locationMarker;
 
-// Declaration of latitude and longitude variables
+// Declaration of latitude and longitude variables, and line variable
 let newLat;
 let newLng;
 let guessLat;
 let guessLng;
+let line;
 
 // Calculate the score given the distance from the location
 function calculateScore(distance) {
@@ -254,6 +255,34 @@ const initialPosition = {
   right: originalMap.style.right,
 };
 
+// Reset map function recenters the map
+function resetMap() {
+  const center = { lat: 0, lng: 0 };
+  map.setCenter(center);
+  map.setZoom(1);
+}
+
+function createLine(lat1, lon1, lat2, lon2) {
+  const lineCoordinates = [{ lat: lat1, lng: lon1 }, { lat: lat2, lng: lon2 }];
+  const lineSymbol = {
+    path: 'M 0, -1 0,1',
+    strokeOpacity: 1,
+    scale: 4,
+  };
+  line = new google.maps.Polyline({
+    path: lineCoordinates,
+    strokeColor: 'purple',
+    strokeOpacity: 0,
+    icons: [{
+      icon: lineSymbol,
+      offset: '0',
+      repeat: '20px',
+    }],
+    map,
+  });
+  line.setMap(map);
+}
+
 function endSoloGame(scoreAccumulated) {
   timer.style.display = 'none';
   guessButton.style.display = 'none';
@@ -269,24 +298,21 @@ function endSoloGame(scoreAccumulated) {
     // eslint-disable-next-line no-use-before-define
     getGamemode();
     playAgainButton.removeEventListener('click', handlePlayAgain);
+    playAgainButton.removeEventListener('touchstart', handlePlayAgain);
   }
   playAgainButton.addEventListener('click', handlePlayAgain);
-}
-
-// Reset map function recenters the map
-function resetMap() {
-  const center = { lat: 0, lng: 0 };
-  map.setCenter(center);
-  map.setZoom(1);
+  playAgainButton.addEventListener('touchstart', handlePlayAgain);
 }
 
 async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Add the event listener to the make guess button
   // eslint-disable-next-line no-use-before-define
   guessButton.addEventListener('click', handleGuessClick);
+  guessButton.addEventListener('touchstart', handleGuessClick);
   console.log(`playSoloGame called with roundDuration, round, scoreAccumulated\n ${roundDuration} , ${round} , ${scoreAccumulated}`);
 
   // Display the map and panorama
+  resetMap();
   mapDiv.style.display = 'block';
   panoramaDiv.style.display = 'flex';
 
@@ -314,8 +340,10 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   function handleGuessClick() {
     stopTimer();
     guessButton.removeEventListener('click', handleGuessClick);
+    guessButton.removeEventListener('touchstart', handleGuessClick);
 
     const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
+    createLine(latitude, longitude, guessLat, guessLng);
     guessLat = undefined;
     guessLng = undefined;
     roundScore = calculateScore(distance);
@@ -345,6 +373,8 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     setTimeout(() => {
       scoreOverlay.style.display = 'none';
       timer.style.display = 'block';
+      line.setMap(null);
+      line = undefined;
       locationMarker.setMap(null);
       locationMarker = undefined;
       if (guessMarker !== undefined) {
@@ -360,7 +390,6 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       originalMap.style.right = initialPosition.right;
 
       if (round < MAX_ROUNDS) {
-        resetMap();
         playSoloGame(roundDuration, round + 1, scoreAccumulated);
       } else {
         endSoloGame(scoreAccumulated);
@@ -372,12 +401,14 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     // Callback function executes when make guess button is not clicked during the round
     stopTimer();
     guessButton.removeEventListener('click', handleGuessClick);
+    guessButton.removeEventListener('touchstart', handleGuessClick);
     timer.style.display = 'none';
     guessButton.style.display = 'none';
     scoreOverlay.style.display = 'block';
     // If there is a guess marker placed but the button was not pressed, score that guess
     if (guessLat !== undefined && guessLng !== undefined) {
       const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
+      createLine(latitude, longitude, guessLat, guessLng);
       guessLat = undefined;
       guessLng = undefined;
       roundScore = calculateScore(distance);
@@ -418,6 +449,8 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       scoreOverlay.style.display = 'none';
       timer.style.display = 'block';
       gameContainer.appendChild(originalMap);
+      line.setMap(null);
+      line = undefined;
       locationMarker.setMap(null);
       locationMarker = undefined;
       if (guessMarker !== undefined) {
@@ -432,7 +465,6 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       originalMap.style.right = initialPosition.right;
 
       if (round < MAX_ROUNDS) {
-        resetMap();
         playSoloGame(roundDuration, round + 1, scoreAccumulated);
       } else {
         endSoloGame(scoreAccumulated);
@@ -529,7 +561,7 @@ function getGamemode() {
     removeEventListeners();
   }
 
-  // Add the event listeners to the buttons
+  // Add the click event listeners to the buttons
   normalDiffButton.addEventListener('click', handleNormalDiff);
   hardDiffButton.addEventListener('click', handleHardDiff);
   expertDiffButton.addEventListener('click', handleExpertDiff);

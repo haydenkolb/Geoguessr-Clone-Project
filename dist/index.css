@@ -9,6 +9,10 @@
     
 }
 
+#navbar-items {
+    margin-left: 2vw;
+}
+
 body {
     height: 100vh;
     width: 100vw;
@@ -127,6 +131,6 @@ body {
 #play-again {
     display: none;
     margin: auto;
-    margin-top: 50vh;
-    padding: 30px;
+    margin-top: 40vh;
+    padding: 2rem;
 }

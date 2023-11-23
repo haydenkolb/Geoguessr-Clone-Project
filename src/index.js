@@ -1,8 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { AuthController } from './AuthControler';
-import { AuthView } from './AuthView';
-import { GameModeSelectionControler } from './GameModeSelectionControler';
-import { GameModeSelectionView } from './GameModeSelectionView';
+import { OverloardControler } from './OverloardControler';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -411,7 +408,5 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   });
 }
 
-const gameModeSelectionControler = null;
-const authControler = new AuthController(new AuthView(),app,() => {
-  gameModeSelectionControler = new GameModeSelectionControler(new GameModeSelectionView(),playSoloGame);
-});
+const variablesObj = {'app':app, 'soloGameCallback':playSoloGame};
+const overloardControler = new OverloardControler(variablesObj);

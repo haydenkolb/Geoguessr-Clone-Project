@@ -12,13 +12,19 @@ class AuthController {
     handleSignIn = (email, password) => {
         console.log(this.auth)
         signInWithEmailAndPassword(this.auth, email, password)
-        .then(() => this.onAuthenticateCallback())
+        .then(() => {
+            this.view.hideForm();
+            this.onAuthenticateCallback();
+        })
         .catch((error) => console.log(error.message));
     }
 
     handleRegister = (email, password) => {
         createUserWithEmailAndPassword(this.auth, email, password)
-        .then(() => this.onAuthenticateCallback())
+        .then(() => {
+            this.view.hideForm();
+            this.onAuthenticateCallback();
+        })
         .catch((error) => console.log(error.message));
     }
 }

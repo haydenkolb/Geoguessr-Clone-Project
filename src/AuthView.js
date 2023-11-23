@@ -26,7 +26,10 @@ class AuthView {
         })
     }
 
-    
+    hideForm = () => {
+        this.signInForm.style.display = 'none';
+    }
+
 }
 
 export { AuthView }

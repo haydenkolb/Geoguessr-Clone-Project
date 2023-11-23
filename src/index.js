@@ -1,5 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { AuthController } from './AuthControler';
+import { AuthView } from './AuthView';
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -15,20 +17,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// Sign in form submitTypeInput holds value of submitted method (sign in / register)
-const submitTypeInput = document.getElementById('submit-type');
-
-// Set submitTypeInput's value when sign-in-button is clicked
-document.getElementById('sign-in-button').addEventListener('click', () => {
-  submitTypeInput.value = 'sign-in';
-});
-
-// Set submitTypeInput's value when register-button is clicked
-document.getElementById('register-button').addEventListener('click', () => {
-  submitTypeInput.value = 'register';
-});
 
 // Declaration of street view service, map, panorama, and guessMarker variables.
 let sv;
@@ -487,46 +475,4 @@ function getGamemode() {
   });
 }
 
-// Handle submit event from signInForm
-const signInForm = document.getElementById('sign-in-form');
-signInForm.addEventListener('submit', (event) => {
-  // Preventing page refresh
-  event.preventDefault();
-  // Get the email and password input fields
-  const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
-
-  // Case of sign-in being pressed
-  if (submitTypeInput.value === 'sign-in') {
-    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-      .then((userCredential) => {
-        // Signed in user
-        const { user } = userCredential;
-        console.log('Signed in user', user);
-
-        // Get user entered gamemode
-        getGamemode();
-      })
-      .catch((error) => {
-        const errorMessage = error.message;
-        console.log(errorMessage);
-      });
-
-  // Case of register being pressed
-  } else if (submitTypeInput.value === 'register') {
-    createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-      .then((userCredential) => {
-        // Newly registered user signed up
-        const { user } = userCredential;
-        console.log(user);
-        console.log(userCredential);
-
-        // Get user entered gamemode
-        getGamemode();
-      })
-      .catch((error) => {
-        const errorMessage = error.message;
-        console.log(errorMessage);
-      });
-  }
-});
+const authControler = new AuthController(new AuthView(),app,getGamemode)

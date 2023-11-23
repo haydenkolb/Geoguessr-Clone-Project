@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { AuthController } from './AuthControler';
 import { AuthView } from './AuthView';
+import { GameModeSelectionControler } from './GameModeSelectionControler';
+import { GameModeSelectionView } from './GameModeSelectionView';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -408,71 +410,8 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     }, 5000);
   });
 }
-// Game mode selection form gameModeTypeInput holds value of submitted game type
-const gameModeTypeInput = document.getElementById('mode-type');
 
-// Get user selected game mode
-function getGamemode() {
-  // Hide auth container and display the game mode selection form and add event listeners
-  const signInForm = document.getElementById('sign-in-form');
-  signInForm.style.display = 'none';
-  const gameModeForm = document.getElementById('game-mode-form');
-  gameModeForm.style.display = 'block';
-
-  // Event listeners for game mode selection buttons
-  document.getElementById('normal-diff').addEventListener('click', () => {
-    gameModeTypeInput.value = 'normal-solo';
-  });
-  document.getElementById('hard-diff').addEventListener('click', () => {
-    gameModeTypeInput.value = 'hard-solo';
-  });
-  document.getElementById('expert-diff').addEventListener('click', () => {
-    gameModeTypeInput.value = 'expert-solo';
-  });
-  document.getElementById('battle-royale').addEventListener('click', () => {
-    gameModeTypeInput.value = 'battle-royale';
-  });
-  document.getElementById('hide-and-seek').addEventListener('click', () => {
-    gameModeTypeInput.value = 'hide-and-seek';
-  });
-
-  // Submit event listener for gamemode selection form
-  gameModeForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    console.log(gameModeTypeInput.value);
-    const gameMode = gameModeTypeInput.value;
-    let roundDuration;
-
-    // Hide the game mode form
-    gameModeForm.style.display = 'none';
-
-    // Determine round duration for the solo game mode & handle case for multiplayer modes selection
-    switch (gameMode) {
-      case 'normal-solo':
-        roundDuration = 120;
-        playSoloGame(roundDuration, 1, 0);
-        break;
-      case 'hard-solo':
-        roundDuration = 60;
-        playSoloGame(roundDuration, 1, 0);
-        break;
-      case 'expert-solo':
-        roundDuration = 30;
-        playSoloGame(roundDuration, 1, 0);
-        break;
-      case 'battle-royale':
-        // TODO
-        // Display the lobby selection page & host lobby button
-        break;
-      case 'hide-and-seek':
-        // TODO
-        // Display the lobby selection page & host lobby button
-        break;
-      default:
-        console.log('default case');
-        break;
-    }
-  });
-}
-
-const authControler = new AuthController(new AuthView(),app,getGamemode)
+const gameModeSelectionControler = null;
+const authControler = new AuthController(new AuthView(),app,() => {
+  gameModeSelectionControler = new GameModeSelectionControler(new GameModeSelectionView(),playSoloGame);
+});

@@ -22,7 +22,7 @@
                 <div class="navbar-collapse collapse" id="navbar">
                     <ul class="navbar-nav" id="navbar-items">
                         <li class="nav-item">
-                            <a class="nav-link" href="#leaderboard">Leaderboard</a>
+                            <a class="nav-link" href="#leaderboard" id="leaderboardLink">Leaderboard</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#about">About</a>
@@ -89,6 +89,46 @@
                 </div>
             </div>
             <button class="btn btn-success" id="guess-button">Make Guess</button>
+        </div>
+
+        <!-- Leaderboard -->
+        <div id="leaderboardSection">
+            <div id="leaderboardTitle" class="leaderboardText">
+                <h1>Leaderboard</h1>
+                <h2 class="text-center">Solo</h2>
+            </div>
+            <div id="leaderboardContainer">
+                <div class="leaderboard" id="topScoresLeaderboard">
+                    <h2 class="leaderboardText">Top Scores</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Top Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+                <div class="leaderboard" id="accumulatedScoresLeaderboard">
+                    <h2 class="leaderboardText">Accumulated Scores</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Accumulated Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
         
         <script src="main.js"></script>

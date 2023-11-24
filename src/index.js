@@ -1,5 +1,13 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  connectAuthEmulator, onAuthStateChanged,
+} from 'firebase/auth';
+
+import {
+  getDatabase, ref, set, get, connectDatabaseEmulator,
+} from 'firebase/database';
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -16,6 +24,9 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getDatabase();
+connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+connectDatabaseEmulator(db, '127.0.0.1', 9000);
 
 // Sign in form submitTypeInput holds value of submitted method (sign in / register)
 const submitTypeInput = document.getElementById('submit-type');
@@ -43,6 +54,35 @@ let newLng;
 let guessLat;
 let guessLng;
 let line;
+
+// Update user's score
+async function updateUserScore(uid, score) {
+  // References to the database
+  const topScoreRef = ref(db, `leaderboard/${uid}/topScore`);
+  const accumulatedScoreRef = ref(db, `leaderboard/${uid}/accumulatedScore`);
+
+  // Initialize local user score variables
+  let topScore;
+  let accumulatedScore;
+
+  // Retrieve the user's topScore and accumulatedScore
+  await get(topScoreRef).then((snapshot) => {
+    topScore = snapshot.val();
+    console.log(topScore);
+  });
+  await get(accumulatedScoreRef).then((snapshot) => {
+    accumulatedScore = snapshot.val();
+    console.log(accumulatedScore);
+  });
+
+  // If the user's score for this game is greater than the user's topScore, update topScore
+  if (score > topScore) {
+    set(topScoreRef, score);
+  }
+  // Update user's accumulatedScore
+  set(accumulatedScoreRef, accumulatedScore + score);
+  console.log(`TOPSCORE = ${topScore}, ACCUMULATED = ${accumulatedScore}`);
+}
 
 // Calculate the score given the distance from the location
 function calculateScore(distance) {
@@ -267,6 +307,7 @@ function resetMap() {
   map.setZoom(1);
 }
 
+// Creates a line on the map after guess
 function createLine(lat1, lon1, lat2, lon2) {
   const lineCoordinates = [{ lat: lat1, lng: lon1 }, { lat: lat2, lng: lon2 }];
   const lineSymbol = {
@@ -274,6 +315,7 @@ function createLine(lat1, lon1, lat2, lon2) {
     strokeOpacity: 1,
     scale: 4,
   };
+  // eslint-disable-next-line no-undef
   line = new google.maps.Polyline({
     path: lineCoordinates,
     strokeColor: 'purple',
@@ -289,6 +331,7 @@ function createLine(lat1, lon1, lat2, lon2) {
 }
 
 function endSoloGame(scoreAccumulated) {
+  updateUserScore(uid, scoreAccumulated);
   timer.style.display = 'none';
   guessButton.style.display = 'none';
   scoreOverlay.style.display = 'block';
@@ -479,7 +522,7 @@ const gameModeTypeInput = document.getElementById('mode-type');
 
 // Get user selected game mode
 function getGamemode() {
-  // Hide auth container and display the game mode selection form and add event listeners
+  // Hide auth container and display the game mode selection form
   const signInForm = document.getElementById('sign-in-form');
   signInForm.style.display = 'none';
   const gameModeForm = document.getElementById('game-mode-form');
@@ -497,7 +540,7 @@ function getGamemode() {
   const battleRoyaleButton = document.getElementById('battle-royale');
   const hideAndSeekButton = document.getElementById('hide-and-seek');
 
-  // Define the event listener functions for the buttons
+  // Event listener functions for the buttons
   function handleNormalDiff() {
     gameModeTypeInput.value = 'normal-solo';
   }
@@ -516,7 +559,7 @@ function getGamemode() {
 
   // Game mode form submit event handler function
   function handleSubmit(event) {
-    // Function removes the event listeners for each button
+    // Removes the event listeners for each button
     function removeEventListeners() {
       normalDiffButton.removeEventListener('click', handleNormalDiff);
       hardDiffButton.removeEventListener('click', handleHardDiff);
@@ -556,7 +599,6 @@ function getGamemode() {
         // Display the lobby selection page & host lobby button
         break;
       default:
-        console.log('default case');
         break;
     }
     // Remove the event listeners to avoid multiple copies of the same listeners
@@ -574,6 +616,9 @@ function getGamemode() {
   gameModeForm.addEventListener('submit', handleSubmit);
 }
 
+// Local uid variable
+let uid;
+
 // Handle submit event from signInForm
 const signInForm = document.getElementById('sign-in-form');
 signInForm.addEventListener('submit', (event) => {
@@ -589,6 +634,7 @@ signInForm.addEventListener('submit', (event) => {
       .then((userCredential) => {
         // Signed in user
         const { user } = userCredential;
+        uid = user.uid;
         console.log('Signed in user', user);
 
         // Get user entered gamemode
@@ -605,8 +651,13 @@ signInForm.addEventListener('submit', (event) => {
       .then((userCredential) => {
         // Newly registered user signed up
         const { user } = userCredential;
-        console.log(user);
-        console.log(userCredential);
+        uid = user.uid;
+        console.log('Registered user', user);
+        // Set user email
+        set(ref(db, `leaderboard/${user.uid}/email/`), emailInput.value);
+        // Initialize user topScore and accumulatedScore
+        set(ref(db, `leaderboard/${user.uid}/topScore/`), 0);
+        set(ref(db, `leaderboard/${user.uid}/accumulatedScore/`), 0);
 
         // Get user entered gamemode
         getGamemode();
@@ -615,5 +666,62 @@ signInForm.addEventListener('submit', (event) => {
         const errorMessage = error.message;
         console.log(errorMessage);
       });
+  }
+});
+
+const leaderboardLink = document.getElementById('leaderboardLink');
+const leaderboardSection = document.getElementById('leaderboardSection');
+const projectTitleLink = document.getElementById('projectTitle');
+
+async function populateLeaderboard() {
+  const topScoresTable = document.querySelector('#topScoresLeaderboard tbody');
+  const accumulatedScoresTable = document.querySelector('#accumulatedScoresLeaderboard tbody');
+
+  const leaderboardRef = ref(db, 'leaderboard');
+
+  try {
+    const snapshot = await get(leaderboardRef);
+    topScoresTable.innerHTML = '';
+    accumulatedScoresTable.innerHTML = '';
+    let count = 1;
+    snapshot.forEach((childSnapshot) => {
+      const userId = childSnapshot.key;
+      const { email, topScore, accumulatedScore } = childSnapshot.val();
+
+      const topScoreRow = `<tr><td>${count}</td><td>${email}</td><td>${topScore}</td></tr>`;
+      const accumulatedScoreRow = `<tr><td>${count}</td><td>${email}</td><td>${accumulatedScore}</td></tr>`;
+
+      topScoresTable.insertAdjacentHTML('beforeend', topScoreRow);
+      accumulatedScoresTable.insertAdjacentHTML('beforeend', accumulatedScoreRow);
+
+      count += 1;
+    });
+  } catch (error) {
+    console.error('Error fetching leaderboard data:', error);
+  }
+}
+
+projectTitleLink.addEventListener('click', () => {
+  if (leaderboardSection.style.display === 'block') {
+    leaderboardSection.style.display = 'none';
+  }
+});
+
+leaderboardLink.addEventListener('click', () => {
+  if (leaderboardSection.style.display === 'none') {
+    leaderboardSection.style.display = 'block';
+    if (uid) {
+      populateLeaderboard();
+    }
+  } else {
+    leaderboardSection.style.display = 'none';
+  }
+});
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    populateLeaderboard();
+  } else {
+    console.log('Not authenticated');
   }
 });

@@ -1,7 +1,7 @@
-import { AuthController } from "./AuthControler";
-import { AuthView } from "./AuthView";
-import { GameModeSelectionControler } from "./GameModeSelectionControler";
-import { GameModeSelectionView } from "./GameModeSelectionView";
+import { AuthController } from "./AuthMVC/AuthControler";
+import { AuthView } from "./AuthMVC/AuthView";
+import { GameModeSelectionControler } from "./GameModeSelectionMVC/GameModeSelectionControler";
+import { GameModeSelectionView } from "./GameModeSelectionMVC/GameModeSelectionView";
 
 class OverloardControler {
     constructor(variablesObj) {

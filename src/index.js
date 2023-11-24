@@ -669,31 +669,58 @@ signInForm.addEventListener('submit', (event) => {
   }
 });
 
+// Leaderboard link in navbar
 const leaderboardLink = document.getElementById('leaderboardLink');
+
+// Leaderboard section
 const leaderboardSection = document.getElementById('leaderboardSection');
+
+// Project title link in navbar
 const projectTitleLink = document.getElementById('projectTitle');
 
+// Populate's the leaderboard in decreasing order
 async function populateLeaderboard() {
+  // Get the leaderboard tables
   const topScoresTable = document.querySelector('#topScoresLeaderboard tbody');
   const accumulatedScoresTable = document.querySelector('#accumulatedScoresLeaderboard tbody');
 
+  // Get the reference to the database
   const leaderboardRef = ref(db, 'leaderboard');
 
   try {
+    // Get data from the database and store in leaderboardData array
     const snapshot = await get(leaderboardRef);
-    topScoresTable.innerHTML = '';
-    accumulatedScoresTable.innerHTML = '';
-    let count = 1;
+    const leaderboardData = [];
     snapshot.forEach((childSnapshot) => {
       const userId = childSnapshot.key;
       const { email, topScore, accumulatedScore } = childSnapshot.val();
+      leaderboardData.push({
+        userId, email, topScore, accumulatedScore,
+      });
+    });
 
+    // Copy & sort the leaderboardData array for topScores and accumulatedScores in decreasing order
+    const topScoreSortedData = [...leaderboardData].sort((a, b) => b.topScore - a.topScore);
+    // eslint-disable-next-line max-len
+    const accumulatedScoreSortedData = [...leaderboardData].sort((a, b) => b.accumulatedScore - a.accumulatedScore);
+
+    // Reset the leaderboards
+    topScoresTable.innerHTML = '';
+    accumulatedScoresTable.innerHTML = '';
+
+    // Append to the topScoresLeaderboard with the sorted scores
+    let count = 1;
+    topScoreSortedData.forEach(({ email, topScore }) => {
       const topScoreRow = `<tr><td>${count}</td><td>${email}</td><td>${topScore}</td></tr>`;
-      const accumulatedScoreRow = `<tr><td>${count}</td><td>${email}</td><td>${accumulatedScore}</td></tr>`;
-
       topScoresTable.insertAdjacentHTML('beforeend', topScoreRow);
-      accumulatedScoresTable.insertAdjacentHTML('beforeend', accumulatedScoreRow);
+      count += 1;
+    });
 
+    // Append to the accumulatedScoresLeaderboard with the sorted scores
+    count = 1;
+    accumulatedScoreSortedData.forEach(({ email, accumulatedScore }) => {
+      const accumulatedScoreRow = `<tr><td>${count}</td><td>${email}</td><td>${accumulatedScore}</td></tr>`;
+      accumulatedScoresTable.insertAdjacentHTML('beforeend', accumulatedScoreRow);
       count += 1;
     });
   } catch (error) {
@@ -701,12 +728,14 @@ async function populateLeaderboard() {
   }
 }
 
+// Hide leaderboard when project title is clicked
 projectTitleLink.addEventListener('click', () => {
   if (leaderboardSection.style.display === 'block') {
     leaderboardSection.style.display = 'none';
   }
 });
 
+// Show leaderboard and populate, if authenticated, when leaderboard nav link is clicked
 leaderboardLink.addEventListener('click', () => {
   if (leaderboardSection.style.display === 'none') {
     leaderboardSection.style.display = 'block';
@@ -718,6 +747,7 @@ leaderboardLink.addEventListener('click', () => {
   }
 });
 
+// On authorization stated changed, populate the leaderboard
 auth.onAuthStateChanged((user) => {
   if (user) {
     populateLeaderboard();

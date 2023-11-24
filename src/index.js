@@ -281,35 +281,38 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Create a dynamic event listener for the make guess button
   // Function executes when make guess button is clicked
   function handleGuessClick() {
-    stopTimer();
-    guessButton.removeEventListener('click', handleGuessClick);
+    function showUserScore() {
+      stopTimer();
+      guessButton.removeEventListener('click', handleGuessClick);
 
-    const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
-    guessLat = undefined;
-    guessLng = undefined;
-    roundScore = calculateScore(distance);
-    timer.style.display = 'none';
-    guessButton.style.display = 'none';
-    scoreOverlay.style.display = 'block';
-    // eslint-disable-next-line no-param-reassign
-    scoreAccumulated += roundScore;
-    roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
-    // Move the map to the scoreOverlay
-    scoreOverlay.appendChild(originalMap);
-    originalMap.style.position = 'absolute';
-    originalMap.style.top = '60%';
-    originalMap.style.left = '50%';
-    originalMap.style.transform = 'translate(-50%, -50%)';
+      const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
+      guessLat = undefined;
+      guessLng = undefined;
+      roundScore = calculateScore(distance);
+      timer.style.display = 'none';
+      guessButton.style.display = 'none';
+      scoreOverlay.style.display = 'block';
+      // eslint-disable-next-line no-param-reassign
+      scoreAccumulated += roundScore;
+      roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
+      // Move the map to the scoreOverlay
+      scoreOverlay.appendChild(originalMap);
+      originalMap.style.position = 'absolute';
+      originalMap.style.top = '60%';
+      originalMap.style.left = '50%';
+      originalMap.style.transform = 'translate(-50%, -50%)';
 
-    // Add the locationMarker and pan to it
-    // eslint-disable-next-line no-undef
-    locationMarker = new google.maps.Marker({
-      position: location,
-      map,
-    });
-    map.panTo(locationMarker.position);
-    distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
-
+      // Add the locationMarker and pan to it
+      // eslint-disable-next-line no-undef
+      locationMarker = new google.maps.Marker({
+        position: location,
+        map,
+      });
+      map.panTo(locationMarker.position);
+      distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
+    }
+    
+    showUserScore()
     // After 5 second intermission between rounds, reset the page and play next round
     setTimeout(() => {
       scoreOverlay.style.display = 'none';
@@ -336,53 +339,57 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     }, 5000);
   }
 
+  // No guess timer
   startTimer(roundDuration, () => {
-    // Callback function executes when make guess button is not clicked during the round
-    stopTimer();
-    guessButton.removeEventListener('click', handleGuessClick);
-    timer.style.display = 'none';
-    guessButton.style.display = 'none';
-    scoreOverlay.style.display = 'block';
-    // If there is a guess marker placed but the button was not pressed, score that guess
-    if (guessLat !== undefined && guessLng !== undefined) {
-      const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
-      guessLat = undefined;
-      guessLng = undefined;
-      roundScore = calculateScore(distance);
-      // eslint-disable-next-line no-param-reassign
-      scoreAccumulated += roundScore;
-      roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
 
-      scoreOverlay.appendChild(originalMap);
-      originalMap.style.position = 'absolute';
-      originalMap.style.top = '50%';
-      originalMap.style.left = '50%';
-      originalMap.style.transform = 'translate(-50%, -50%)';
-      // Add the locationMarker and pan to it
-      // eslint-disable-next-line no-undef
-      locationMarker = new google.maps.Marker({
-        position: location,
-        map,
-      });
-      map.panTo(locationMarker.position);
-      distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
-    } else {
-      roundScoreP.innerHTML = 'Guessing time ran out!';
-      scoreOverlay.appendChild(originalMap);
-      originalMap.style.position = 'absolute';
-      originalMap.style.top = '60%';
-      originalMap.style.left = '50%';
-      originalMap.style.transform = 'translate(-50%, -50%)';
-      // eslint-disable-next-line no-undef
-      locationMarker = new google.maps.Marker({
-        position: location,
-        map,
-      });
-      map.panTo(locationMarker.position);
-      distanceP.innerHTML = '';
+    function noGuessMade() {
+      // Callback function executes when make guess button is not clicked during the round
+      stopTimer();
+      guessButton.removeEventListener('click', handleGuessClick);
+      timer.style.display = 'none';
+      guessButton.style.display = 'none';
+      scoreOverlay.style.display = 'block';
+      // If there is a guess marker placed but the button was not pressed, score that guess
+      if (guessLat !== undefined && guessLng !== undefined) {
+        const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
+        guessLat = undefined;
+        guessLng = undefined;
+        roundScore = calculateScore(distance);
+        // eslint-disable-next-line no-param-reassign
+        scoreAccumulated += roundScore;
+        roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
+
+        scoreOverlay.appendChild(originalMap);
+        originalMap.style.position = 'absolute';
+        originalMap.style.top = '50%';
+        originalMap.style.left = '50%';
+        originalMap.style.transform = 'translate(-50%, -50%)';
+        // Add the locationMarker and pan to it
+        // eslint-disable-next-line no-undef
+        locationMarker = new google.maps.Marker({
+          position: location,
+          map,
+        });
+        map.panTo(locationMarker.position);
+        distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
+      } else {
+        roundScoreP.innerHTML = 'Guessing time ran out!';
+        scoreOverlay.appendChild(originalMap);
+        originalMap.style.position = 'absolute';
+        originalMap.style.top = '60%';
+        originalMap.style.left = '50%';
+        originalMap.style.transform = 'translate(-50%, -50%)';
+        // eslint-disable-next-line no-undef
+        locationMarker = new google.maps.Marker({
+          position: location,
+          map,
+        });
+        map.panTo(locationMarker.position);
+        distanceP.innerHTML = '';
+      }
     }
-    // After 5 second intermission between rounds, reset the page and play next round
-    setTimeout(() => {
+
+    restPageAndStartNextRound = () => {
       scoreOverlay.style.display = 'none';
       timer.style.display = 'block';
       gameContainer.appendChild(originalMap);
@@ -404,7 +411,11 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       } else {
         endSoloGame(scoreAccumulated);
       }
-    }, 5000);
+    }
+
+    noGuessMade();
+    // After 5 second intermission between rounds, reset the page and play next round
+    setTimeout(restPageAndStartNextRound, 5000);
   });
 }
 

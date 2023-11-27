@@ -24,84 +24,12 @@ let panorama;
 let guessMarker;
 let locationMarker;
 
-// Declaration of latitude and longitude variables
-let newLat;
-let newLng;
-let guessLat;
-let guessLng;
-
-// Calculate the score given the distance from the location
-function calculateScore(distance) {
-  const maxScore = 5000;
-  const maxDistance = 5000;
-
-  const score = maxScore * (1 - distance / maxDistance);
-  return Math.max(0, Math.round(score));
-}
-
-// Helper function for haversine distance
-function toRadians(angle) {
-  return angle * (Math.PI / 180);
-}
-
-// Haversine distance function returns the distance of the guess to the actual location
-function haversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRadians(lat1))
-   * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c;
-  return d;
-}
-
-// Guessing button
-const guessButton = document.getElementById('guess-button');
-
-// Score overlay
-const scoreOverlay = document.getElementById('score-overlay');
-
-// Timer
-const timer = document.getElementById('timer');
-
-const timeRemaining = document.getElementById('time-remaining');
-let intervalId;
-
-// Timer function displays the time left
-function startTimer(roundDuration, onEnd) {
-  let time = roundDuration;
-  let minutes;
-  let seconds;
-
-  intervalId = setInterval(() => {
-    minutes = parseInt(time / 60, 10);
-    seconds = parseInt(time % 60, 10);
-
-    minutes = minutes < 10 ? `0${minutes}` : minutes;
-    seconds = seconds < 10 ? `0${seconds}` : seconds;
-
-    timeRemaining.innerHTML = `${minutes}:${seconds}`;
-
-    if (time <= 0) {
-      clearInterval(intervalId);
-      onEnd();
-    }
-    time -= 1;
-  }, 1000);
-}
-
-// Function stops the timer
-function stopTimer() {
-  if (intervalId !== undefined) {
-    console.log(`Stopping timer ${intervalId}`);
-    clearInterval(intervalId);
-    intervalId = undefined;
-  }
-}
+// guess location of user
+const guessCoordinatesObj = {'lat':null, 'lon':null};
 
 // Places a marker on the guessing map when clicked
 function placeGuessMarker(latLng) {
+  const guessButton = document.getElementById('guess-button')
   // If a marker has been placed already, get rid of it and create a new marker.
   if (guessButton.style.display !== 'block') {
     guessButton.style.display = 'block';
@@ -119,8 +47,8 @@ function placeGuessMarker(latLng) {
   });
   console.log(`Guess marker lat: ${latLng.lat()}`);
   console.log(`Guess marker lng: ${latLng.lng()}`);
-  guessLat = latLng.lat();
-  guessLng = latLng.lng();
+  guessCoordinatesObj.lat = latLng.lat();
+  guessCoordinatesObj.lon = latLng.lng();
 }
 
 // Callback function for Google maps API
@@ -199,8 +127,8 @@ async function processSVData(loc, rad) {
         console.log(data);
         // A panoramic street view was found, create the panorama & send the updated coordinates
         const newLatLng = data.location.latLng;
-        newLat = newLatLng.lat();
-        newLng = newLatLng.lng();
+        const newLat = newLatLng.lat();
+        const newLng = newLatLng.lng();
         panorama.setPano(data.location.pano);
         panorama.setPov({
           heading: 270,
@@ -216,208 +144,35 @@ async function processSVData(loc, rad) {
   });
 }
 
-// Initialize MAX_ROUNDS
-const MAX_ROUNDS = 5;
-
-// Initialize roundScore
-let roundScore;
-
-// Get the elements from the page
-const roundScoreP = document.getElementById('round-score');
-const distanceP = document.getElementById('distance');
-const gameContainer = document.getElementById('game-container');
-const originalMap = document.getElementById('map');
-const mapDiv = document.getElementById('map');
-const panoramaDiv = document.getElementById('pano');
-
-// Store the initial layout of the map for rearranging later
-const initialPosition = {
-  position: originalMap.style.position,
-  top: originalMap.style.top,
-  left: originalMap.style.left,
-  transform: originalMap.style.transform,
-  bottom: originalMap.style.bottom,
-  right: originalMap.style.right,
-};
-
-function endSoloGame(scoreAccumulated) {
-  timer.style.display = 'none';
-  guessButton.style.display = 'none';
-  scoreOverlay.style.display = 'block';
-  mapDiv.style.display = 'none';
-  distanceP.innerHTML = '';
-  roundScoreP.innerHTML = `Game over.<br>Your score for this game is <span style="color:purple">${scoreAccumulated}</span>`;
-}
-
-async function playSoloGame(roundDuration, round, scoreAccumulated) {
-  // Add the event listener to the make guess button
-  // eslint-disable-next-line no-use-before-define
-  guessButton.addEventListener('click', handleGuessClick);
-  console.log(`playSoloGame called with roundDuration, round, scoreAccumulated\n ${roundDuration} , ${round} , ${scoreAccumulated}`);
-
-  // Display the map and panorama
-  mapDiv.style.display = 'block';
-  panoramaDiv.style.display = 'flex';
-
-  // Generate a new location
-  const location = await getRandomLocation();
-
-  // Obtain a panoramic view
-  const locationData = await processSVData(location, 100);
-
-  // Display and reset timer
-  timer.style.display = 'block';
-  stopTimer();
-
-  // Store latitude and logitude of the actual location for placing locationMarker
-  // eslint-disable-next-line no-unused-vars
-  const latitude = locationData.newLat;
-  // eslint-disable-next-line no-unused-vars
-  const longitude = locationData.newLng;
-
-  // Initialize roundScore
-  roundScore = 0;
-
-  // Create a dynamic event listener for the make guess button
-  // Function executes when make guess button is clicked
-  function handleGuessClick() {
-    function showUserScore() {
-      stopTimer();
-      guessButton.removeEventListener('click', handleGuessClick);
-
-      const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
-      guessLat = undefined;
-      guessLng = undefined;
-      roundScore = calculateScore(distance);
-      timer.style.display = 'none';
-      guessButton.style.display = 'none';
-      scoreOverlay.style.display = 'block';
-      // eslint-disable-next-line no-param-reassign
-      scoreAccumulated += roundScore;
-      roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
-      // Move the map to the scoreOverlay
-      scoreOverlay.appendChild(originalMap);
-      originalMap.style.position = 'absolute';
-      originalMap.style.top = '60%';
-      originalMap.style.left = '50%';
-      originalMap.style.transform = 'translate(-50%, -50%)';
-
-      // Add the locationMarker and pan to it
-      // eslint-disable-next-line no-undef
-      locationMarker = new google.maps.Marker({
-        position: location,
-        map,
-      });
-      map.panTo(locationMarker.position);
-      distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
-    }
-    
-    showUserScore()
-    // After 5 second intermission between rounds, reset the page and play next round
-    setTimeout(() => {
-      scoreOverlay.style.display = 'none';
-      timer.style.display = 'block';
-      locationMarker.setMap(null);
-      locationMarker = undefined;
-      if (guessMarker !== undefined) {
-        guessMarker.setMap(null);
-        guessMarker = undefined;
-      }
-      gameContainer.appendChild(originalMap);
-      originalMap.style.position = initialPosition.position;
-      originalMap.style.top = initialPosition.top;
-      originalMap.style.left = initialPosition.left;
-      originalMap.style.transform = initialPosition.transform;
-      originalMap.style.bottom = initialPosition.bottom;
-      originalMap.style.right = initialPosition.right;
-
-      if (round < MAX_ROUNDS) {
-        playSoloGame(roundDuration, round + 1, scoreAccumulated);
-      } else {
-        endSoloGame(scoreAccumulated);
-      }
-    }, 5000);
-  }
-
-  // No guess timer
-  startTimer(roundDuration, () => {
-
-    function noGuessMade() {
-      // Callback function executes when make guess button is not clicked during the round
-      stopTimer();
-      guessButton.removeEventListener('click', handleGuessClick);
-      timer.style.display = 'none';
-      guessButton.style.display = 'none';
-      scoreOverlay.style.display = 'block';
-      // If there is a guess marker placed but the button was not pressed, score that guess
-      if (guessLat !== undefined && guessLng !== undefined) {
-        const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
-        guessLat = undefined;
-        guessLng = undefined;
-        roundScore = calculateScore(distance);
-        // eslint-disable-next-line no-param-reassign
-        scoreAccumulated += roundScore;
-        roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
-
-        scoreOverlay.appendChild(originalMap);
-        originalMap.style.position = 'absolute';
-        originalMap.style.top = '50%';
-        originalMap.style.left = '50%';
-        originalMap.style.transform = 'translate(-50%, -50%)';
-        // Add the locationMarker and pan to it
-        // eslint-disable-next-line no-undef
-        locationMarker = new google.maps.Marker({
-          position: location,
-          map,
-        });
-        map.panTo(locationMarker.position);
-        distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
-      } else {
-        roundScoreP.innerHTML = 'Guessing time ran out!';
-        scoreOverlay.appendChild(originalMap);
-        originalMap.style.position = 'absolute';
-        originalMap.style.top = '60%';
-        originalMap.style.left = '50%';
-        originalMap.style.transform = 'translate(-50%, -50%)';
-        // eslint-disable-next-line no-undef
-        locationMarker = new google.maps.Marker({
-          position: location,
-          map,
-        });
-        map.panTo(locationMarker.position);
-        distanceP.innerHTML = '';
-      }
-    }
-
-    restPageAndStartNextRound = () => {
-      scoreOverlay.style.display = 'none';
-      timer.style.display = 'block';
-      gameContainer.appendChild(originalMap);
-      locationMarker.setMap(null);
-      locationMarker = undefined;
-      if (guessMarker !== undefined) {
-        guessMarker.setMap(null);
-        guessMarker = undefined;
-      }
-      originalMap.style.position = initialPosition.position;
-      originalMap.style.top = initialPosition.top;
-      originalMap.style.left = initialPosition.left;
-      originalMap.style.transform = initialPosition.transform;
-      originalMap.style.bottom = initialPosition.bottom;
-      originalMap.style.right = initialPosition.right;
-
-      if (round < MAX_ROUNDS) {
-        playSoloGame(roundDuration, round + 1, scoreAccumulated);
-      } else {
-        endSoloGame(scoreAccumulated);
-      }
-    }
-
-    noGuessMade();
-    // After 5 second intermission between rounds, reset the page and play next round
-    setTimeout(restPageAndStartNextRound, 5000);
+function setLocationMarker(LatLng) {
+  locationMarker = new google.maps.Marker({
+    position: LatLng,
+    map,
   });
 }
 
-const variablesObj = {'app':app, 'soloGameCallback':playSoloGame};
+// TODO: change name  to panToMarker
+function panToLocationMarker() {
+  map.panTo(locationMarker.position);
+}
+
+function clearLocationMarkers() {
+  locationMarker.setMap(null);
+  locationMarker = undefined;
+  if (guessMarker !== undefined) {
+    guessMarker.setMap(null);
+    guessMarker = undefined;
+  }
+}
+
+const variablesObj = {
+  'app':app,
+  'guessCoordinatesObj':guessCoordinatesObj,
+  'setLocationMarker':setLocationMarker,
+  'panToLocationMarker':panToLocationMarker,
+  'getRandomLocation':getRandomLocation,
+  'processSVData':processSVData,
+  'clearLocationMarkers':clearLocationMarkers
+};
+
 const overloardControler = new OverloardControler(variablesObj);

@@ -2,6 +2,9 @@ import { AuthController } from "./AuthMVC/AuthControler";
 import { AuthView } from "./AuthMVC/AuthView";
 import { GameModeSelectionControler } from "./GameModeSelectionMVC/GameModeSelectionControler";
 import { GameModeSelectionView } from "./GameModeSelectionMVC/GameModeSelectionView";
+import { InSoloGameModel } from "./InSoloGameMVC/InSoloGameModel";
+import { InSoloGameView } from "./InSoloGameMVC/InSoloGameView";
+import { InSoloGameControler } from "./InSoloGameMVC/InSoloGameControler";
 
 class OverloardControler {
     constructor(variablesObj) {
@@ -16,20 +19,33 @@ class OverloardControler {
     }
 
     setAuthMVC = () => {
+        console.log('MVC: Auth');
         this.currentModel = null;
         this.currentView = new AuthView();
         this.currentControler = new AuthController(this.currentView, this.variablesObj.app, this.setGameModeSelectionMVC);
     }
 
     setGameModeSelectionMVC = () => {
+        console.log('MVC: Game Mode Selection');
         this.currentModel = null;
         this.currentView = new GameModeSelectionView();
-        // call back is temperory, till in game MVC is created
-        this.currentControler = new GameModeSelectionControler(this.currentView, this.variablesObj.soloGameCallback);
+        this.currentControler = new GameModeSelectionControler(this.currentView, this.setInSoloGameMVC);
     }
 
-    setInSoloGameMVC = () => {
-        // TODO:
+    setInSoloGameMVC = (rounds,roundDuration) => {
+        console.log('MVC: Solo Game');
+        this.currentView = new InSoloGameView();
+        this.currentModel = new InSoloGameModel(rounds,roundDuration);
+        this.currentControler = new InSoloGameControler(
+            this.currentView,
+            this.currentModel,
+            this.variablesObj.guessCoordinatesObj,
+            this.variablesObj.setLocationMarker,
+            this.variablesObj.panToLocationMarker,
+            this.variablesObj.getRandomLocation,
+            this.variablesObj.processSVData,
+            this.variablesObj.clearLocationMarkers
+            );
     }
 }
 

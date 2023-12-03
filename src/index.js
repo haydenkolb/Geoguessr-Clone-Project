@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  connectAuthEmulator, onAuthStateChanged,
+  connectAuthEmulator, onAuthStateChanged, signOut,
 } from 'firebase/auth';
 
 import {
@@ -81,7 +81,6 @@ async function updateUserScore(uid, score) {
   }
   // Update user's accumulatedScore
   set(accumulatedScoreRef, accumulatedScore + score);
-  console.log(`TOPSCORE = ${topScore}, ACCUMULATED = ${accumulatedScore}`);
 }
 
 // Calculate the score given the distance from the location
@@ -199,14 +198,6 @@ async function initialize() {
     disableDefaultUI: true,
     clickableIcons: false,
     gestureHandling: 'greedy',
-  });
-  // Add click event listener for placing guess marker & display the 'Make Guess' button
-  map.addListener('click', (e) => {
-    placeGuessMarker(e.latLng);
-  });
-  map.addListener('touchstart', (e) => {
-    e.preventDefault();
-    placeGuessMarker(e.latLng);
   });
 }
 window.initialize = initialize;
@@ -352,6 +343,8 @@ function endSoloGame(scoreAccumulated) {
   playAgainButton.addEventListener('touchstart', handlePlayAgain);
 }
 
+let timeoutId;
+
 async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Add the event listener to the make guess button
   // eslint-disable-next-line no-use-before-define
@@ -360,8 +353,17 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
 
   // Display the map and panorama
   resetMap();
+  gameContainer.appendChild(originalMap);
+  originalMap.style.position = initialPosition.position;
+  originalMap.style.top = initialPosition.top;
+  originalMap.style.left = initialPosition.left;
+  originalMap.style.transform = initialPosition.transform;
+  originalMap.style.bottom = initialPosition.bottom;
+  originalMap.style.right = initialPosition.right;
+
   mapDiv.style.display = 'block';
   panoramaDiv.style.display = 'flex';
+  scoreOverlay.style.display = 'none';
 
   // Generate a new location
   const location = await getRandomLocation();
@@ -379,6 +381,15 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // eslint-disable-next-line no-unused-vars
   const longitude = locationData.newLng;
 
+  // Add click event listener for placing guess marker & display the 'Make Guess' button
+  const mapClickListener = map.addListener('click', (e) => {
+    placeGuessMarker(e.latLng);
+  });
+  const mapTouchListener = map.addListener('touchstart', (e) => {
+    e.preventDefault();
+    placeGuessMarker(e.latLng);
+  });
+
   // Initialize roundScore
   roundScore = 0;
 
@@ -386,6 +397,10 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Function executes when make guess button is clicked
   function handleGuessClick() {
     stopTimer();
+    // eslint-disable-next-line no-undef
+    google.maps.event.removeListener(mapClickListener);
+    // eslint-disable-next-line no-undef
+    google.maps.event.removeListener(mapTouchListener);
     guessButton.removeEventListener('click', handleGuessClick);
 
     const distance = haversineDistance(newLat, newLng, guessLat, guessLng);
@@ -416,7 +431,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
 
     // After 5 second intermission between rounds, reset the page and play next round
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       scoreOverlay.style.display = 'none';
       timer.style.display = 'block';
       line.setMap(null);
@@ -446,6 +461,10 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   startTimer(roundDuration, () => {
     // Callback function executes when make guess button is not clicked during the round
     stopTimer();
+    // eslint-disable-next-line no-undef
+    google.maps.event.removeListener(mapClickListener);
+    // eslint-disable-next-line no-undef
+    google.maps.event.removeListener(mapTouchListener);
     guessButton.removeEventListener('click', handleGuessClick);
     timer.style.display = 'none';
     guessButton.style.display = 'none';
@@ -475,7 +494,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       map.panTo(locationMarker.position);
       distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
     } else {
-      roundScoreP.innerHTML = 'Guessing time ran out!';
+      roundScoreP.innerHTML = `Guessing time ran out!<br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
       scoreOverlay.appendChild(originalMap);
       originalMap.style.position = 'absolute';
       originalMap.style.top = '60%';
@@ -490,12 +509,14 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       distanceP.innerHTML = '';
     }
     // After 5 second intermission between rounds, reset the page and play next round
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       scoreOverlay.style.display = 'none';
       timer.style.display = 'block';
       gameContainer.appendChild(originalMap);
-      line.setMap(null);
-      line = undefined;
+      if (line !== undefined) {
+        line.setMap(null);
+        line = undefined;
+      }
       locationMarker.setMap(null);
       locationMarker = undefined;
       if (guessMarker !== undefined) {
@@ -520,12 +541,67 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
 // Game mode selection form gameModeTypeInput holds value of submitted game type
 const gameModeTypeInput = document.getElementById('mode-type');
 
+const signInForm = document.getElementById('sign-in-form');
+const gameModeForm = document.getElementById('game-mode-form');
+
+// Get the buttons
+const normalDiffButton = document.getElementById('normal-diff');
+const hardDiffButton = document.getElementById('hard-diff');
+const expertDiffButton = document.getElementById('expert-diff');
+
+// Event listener functions for the buttons
+function handleNormalDiff() {
+  gameModeTypeInput.value = 'normal-solo';
+}
+function handleHardDiff() {
+  gameModeTypeInput.value = 'hard-solo';
+}
+function handleExpertDiff() {
+  gameModeTypeInput.value = 'expert-solo';
+}
+
+// Game mode form submit event handler function
+function handleSubmit(event) {
+  // Removes the event listeners for each button
+  function removeEventListeners() {
+    normalDiffButton.removeEventListener('click', handleNormalDiff);
+    hardDiffButton.removeEventListener('click', handleHardDiff);
+    expertDiffButton.removeEventListener('click', handleExpertDiff);
+    gameModeForm.removeEventListener('submit', handleSubmit);
+  }
+  event.preventDefault();
+  console.log(gameModeTypeInput.value);
+  const gameMode = gameModeTypeInput.value;
+  let roundDuration;
+
+  // Hide the game mode form
+  gameModeForm.style.display = 'none';
+
+  // Determine round duration for the solo game mode & handle case for multiplayer modes selection
+  switch (gameMode) {
+    case 'normal-solo':
+      roundDuration = 120;
+      playSoloGame(roundDuration, 1, 0);
+      break;
+    case 'hard-solo':
+      roundDuration = 60;
+      playSoloGame(roundDuration, 1, 0);
+      break;
+    case 'expert-solo':
+      roundDuration = 30;
+      playSoloGame(roundDuration, 1, 0);
+      break;
+    default:
+      break;
+  }
+  // Remove the event listeners to avoid multiple copies of the same listeners
+  removeEventListeners();
+}
+
 // Get user selected game mode
 function getGamemode() {
   // Hide auth container and display the game mode selection form
-  const signInForm = document.getElementById('sign-in-form');
   signInForm.style.display = 'none';
-  const gameModeForm = document.getElementById('game-mode-form');
   gameModeForm.style.display = 'block';
 
   // Hide the map, panorama, and play again button
@@ -533,84 +609,10 @@ function getGamemode() {
   panoramaDiv.style.display = 'none';
   playAgainButton.style.display = 'none';
 
-  // Get the buttons
-  const normalDiffButton = document.getElementById('normal-diff');
-  const hardDiffButton = document.getElementById('hard-diff');
-  const expertDiffButton = document.getElementById('expert-diff');
-  const battleRoyaleButton = document.getElementById('battle-royale');
-  const hideAndSeekButton = document.getElementById('hide-and-seek');
-
-  // Event listener functions for the buttons
-  function handleNormalDiff() {
-    gameModeTypeInput.value = 'normal-solo';
-  }
-  function handleHardDiff() {
-    gameModeTypeInput.value = 'hard-solo';
-  }
-  function handleExpertDiff() {
-    gameModeTypeInput.value = 'expert-solo';
-  }
-  function handleBattleRoyale() {
-    gameModeTypeInput.value = 'battle-royale';
-  }
-  function handleHideAndSeek() {
-    gameModeTypeInput.value = 'hide-and-seek';
-  }
-
-  // Game mode form submit event handler function
-  function handleSubmit(event) {
-    // Removes the event listeners for each button
-    function removeEventListeners() {
-      normalDiffButton.removeEventListener('click', handleNormalDiff);
-      hardDiffButton.removeEventListener('click', handleHardDiff);
-      expertDiffButton.removeEventListener('click', handleExpertDiff);
-      battleRoyaleButton.removeEventListener('click', handleBattleRoyale);
-      hideAndSeekButton.removeEventListener('click', handleHideAndSeek);
-      gameModeForm.removeEventListener('submit', handleSubmit);
-    }
-    event.preventDefault();
-    console.log(gameModeTypeInput.value);
-    const gameMode = gameModeTypeInput.value;
-    let roundDuration;
-
-    // Hide the game mode form
-    gameModeForm.style.display = 'none';
-
-    // Determine round duration for the solo game mode & handle case for multiplayer modes selection
-    switch (gameMode) {
-      case 'normal-solo':
-        roundDuration = 120;
-        playSoloGame(roundDuration, 1, 0);
-        break;
-      case 'hard-solo':
-        roundDuration = 60;
-        playSoloGame(roundDuration, 1, 0);
-        break;
-      case 'expert-solo':
-        roundDuration = 30;
-        playSoloGame(roundDuration, 1, 0);
-        break;
-      case 'battle-royale':
-        // TODO
-        // Display the lobby selection page & host lobby button
-        break;
-      case 'hide-and-seek':
-        // TODO
-        // Display the lobby selection page & host lobby button
-        break;
-      default:
-        break;
-    }
-    // Remove the event listeners to avoid multiple copies of the same listeners
-    removeEventListeners();
-  }
-
   // Add the click event listeners to the buttons
   normalDiffButton.addEventListener('click', handleNormalDiff);
   hardDiffButton.addEventListener('click', handleHardDiff);
   expertDiffButton.addEventListener('click', handleExpertDiff);
-  battleRoyaleButton.addEventListener('click', handleBattleRoyale);
-  hideAndSeekButton.addEventListener('click', handleHideAndSeek);
 
   // Add submit event listener for gamemode selection form
   gameModeForm.addEventListener('submit', handleSubmit);
@@ -619,8 +621,9 @@ function getGamemode() {
 // Local uid variable
 let uid;
 
+const signOutLink = document.getElementById('signOutLink');
+
 // Handle submit event from signInForm
-const signInForm = document.getElementById('sign-in-form');
 signInForm.addEventListener('submit', (event) => {
   // Preventing page refresh
   event.preventDefault();
@@ -636,6 +639,7 @@ signInForm.addEventListener('submit', (event) => {
         const { user } = userCredential;
         uid = user.uid;
         console.log('Signed in user', user);
+        signOutLink.style.display = 'block';
 
         // Get user entered gamemode
         getGamemode();
@@ -653,6 +657,7 @@ signInForm.addEventListener('submit', (event) => {
         const { user } = userCredential;
         uid = user.uid;
         console.log('Registered user', user);
+        signOutLink.style.display = 'block';
         // Set user email
         set(ref(db, `leaderboard/${user.uid}/email/`), emailInput.value);
         // Initialize user topScore and accumulatedScore
@@ -683,6 +688,12 @@ async function populateLeaderboard() {
   // Get the leaderboard tables
   const topScoresTable = document.querySelector('#topScoresLeaderboard tbody');
   const accumulatedScoresTable = document.querySelector('#accumulatedScoresLeaderboard tbody');
+
+  if (!uid) {
+    topScoresTable.innerHTML = '';
+    accumulatedScoresTable.innerHTML = '';
+    return;
+  }
 
   // Get the reference to the database
   const leaderboardRef = ref(db, 'leaderboard');
@@ -739,19 +750,41 @@ projectTitleLink.addEventListener('click', () => {
 leaderboardLink.addEventListener('click', () => {
   if (leaderboardSection.style.display === 'none') {
     leaderboardSection.style.display = 'block';
-    if (uid) {
-      populateLeaderboard();
-    }
+    populateLeaderboard();
   } else {
     leaderboardSection.style.display = 'none';
   }
 });
 
-// On authorization stated changed, populate the leaderboard
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    populateLeaderboard();
-  } else {
-    console.log('Not authenticated');
+function handleSignOut() {
+  auth.signOut();
+  stopTimer();
+  uid = undefined;
+  newLat = undefined;
+  newLng = undefined;
+  normalDiffButton.removeEventListener('click', handleNormalDiff);
+  hardDiffButton.removeEventListener('click', handleHardDiff);
+  expertDiffButton.removeEventListener('click', handleExpertDiff);
+  gameModeForm.removeEventListener('submit', handleSubmit);
+  if (timeoutId !== undefined) {
+    clearTimeout(timeoutId);
   }
-});
+  if (line !== undefined) {
+    line.setMap(null);
+    line = undefined;
+  }
+  if (guessMarker !== undefined) {
+    guessMarker.setMap(null);
+    guessMarker = undefined;
+  }
+  if (locationMarker !== undefined) {
+    locationMarker.setMap(null);
+    locationMarker = undefined;
+  }
+  gameModeForm.style.display = 'none';
+  mapDiv.style.display = 'none';
+  panoramaDiv.style.display = 'none';
+  signOutLink.style.display = 'none';
+  signInForm.style.display = 'block';
+}
+signOutLink.addEventListener('click', handleSignOut);

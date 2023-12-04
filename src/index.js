@@ -321,8 +321,11 @@ function createLine(lat1, lon1, lat2, lon2) {
   line.setMap(map);
 }
 
+const signOutLink = document.getElementById('signOutLink');
+
 function endSoloGame(scoreAccumulated) {
   updateUserScore(uid, scoreAccumulated);
+  signOutLink.classList.remove('disabled');
   timer.style.display = 'none';
   guessButton.style.display = 'none';
   scoreOverlay.style.display = 'block';
@@ -349,6 +352,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Add the event listener to the make guess button
   // eslint-disable-next-line no-use-before-define
   guessButton.addEventListener('click', handleGuessClick);
+  signOutLink.classList.add('disabled');
   console.log(`playSoloGame called with roundDuration, round, scoreAccumulated\n ${roundDuration} , ${round} , ${scoreAccumulated}`);
 
   // Display the map and panorama
@@ -423,6 +427,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
 
     // Add the locationMarker and pan to it
     // eslint-disable-next-line no-undef
+    console.log(`placing marker 1`);
     locationMarker = new google.maps.Marker({
       position: location,
       map,
@@ -621,8 +626,6 @@ function getGamemode() {
 // Local uid variable
 let uid;
 
-const signOutLink = document.getElementById('signOutLink');
-
 // Handle submit event from signInForm
 signInForm.addEventListener('submit', (event) => {
   // Preventing page refresh
@@ -758,29 +761,11 @@ leaderboardLink.addEventListener('click', () => {
 
 function handleSignOut() {
   auth.signOut();
-  stopTimer();
   uid = undefined;
-  newLat = undefined;
-  newLng = undefined;
   normalDiffButton.removeEventListener('click', handleNormalDiff);
   hardDiffButton.removeEventListener('click', handleHardDiff);
   expertDiffButton.removeEventListener('click', handleExpertDiff);
   gameModeForm.removeEventListener('submit', handleSubmit);
-  if (timeoutId !== undefined) {
-    clearTimeout(timeoutId);
-  }
-  if (line !== undefined) {
-    line.setMap(null);
-    line = undefined;
-  }
-  if (guessMarker !== undefined) {
-    guessMarker.setMap(null);
-    guessMarker = undefined;
-  }
-  if (locationMarker !== undefined) {
-    locationMarker.setMap(null);
-    locationMarker = undefined;
-  }
   gameModeForm.style.display = 'none';
   mapDiv.style.display = 'none';
   panoramaDiv.style.display = 'none';

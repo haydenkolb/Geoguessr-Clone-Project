@@ -4,7 +4,7 @@
         <title>Geoguessr Clone</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
+        <link rel="icon" type="image" href="icons/map-marker.png">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
         <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
@@ -14,7 +14,10 @@
         <!-- Top Navbar -->
         <div id="navContainer">
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="topNav">
-                <a class="navbar-brand" href="#" id="projectTitle">Geoguessr Clone</a>
+                <a class="navbar-brand" href="#" id="projectTitle">
+                    <img src="icons/map-marker.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                    Geoguessr Clone
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
                 <span class="navbar-toggler-icon"></span>
                 </button>
@@ -25,7 +28,7 @@
                             <a class="nav-link" href="#leaderboard" id="leaderboardLink">Leaderboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#about">About</a>
+                            <a class="nav-link" href="#about" id="aboutLink">About</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#" id="signOutLink">Sign Out</a>
@@ -44,7 +47,7 @@
                     <input type="text" class="form-control" id="email" name="auth" placeholder="Email">
                 </div>
                 <div class="form-outline">
-                    <input type="text" class="form-control" id="password" name="auth" placeholder="Password">
+                    <input type="text" class="form-control" id="password" name="auth" placeholder="Password (at least 6 characters)">
                 </div>
                 <input type="hidden" id="submit-type" name="submit-type">
                 <div class="form-outline">
@@ -125,6 +128,40 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div id="aboutSection">
+            <div id="aboutTitle">
+                <h1>About This Project</h1>
+            </div>
+            <div id="aboutBody">
+                <p>
+                    Welcome to our <a href="https://www.geoguessr.com/" target="_blank">Geoguessr</a>-inspired project!
+                    We are not affiliated with the official game, but our project aims to recreate the experience
+                    players have while playing Geoguessr, a popular and intriguing geography guessing game.
+                </p>
+                <p>
+                    Test your knowledge of geography as you are placed in random locations from all around the world.
+                    Leveraging Google's extensive collection of street view imagery, including externally contributed images,
+                    along with our random location generator, you may find yourself in some instantly recognizable locations or perhaps in some of the most
+                    remote locations on Earth while playing our game!
+                </p>
+                <h2>
+                    How to Play
+                </h2>
+                <p>
+                    Once you've registered an account or have signed in to an existing account, you can choose from three difficulty levels:
+                    <b><span style="color:green">Easy</span> <span style="color:yellow">Medium</span> or <span style="color:red">Hard</span></b>.
+                    Each game is 5 rounds long with a new location generated for each round.
+                    Increasing the difficulty level reduces the time you have to guess your location during each round. Here are the guessing times below:
+                    <ul>
+                        <li><b><span style="color:green">Easy</span></b> : 2:00 </li>
+                        <li><b><span style="color:yellow">Medium</span></b> : 1:00 </li>
+                        <li><b><span style="color:red">Hard</span></b> : 0:30 </li>
+                    </ul>
+                </p>
             </div>
         </div>
         

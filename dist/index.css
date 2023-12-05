@@ -16,6 +16,7 @@
 
 #signOutLink {
     display: none;
+
 }
 
 body {
@@ -176,4 +177,32 @@ body {
 
 #topScoresLeaderboard, #accumulatedScoresLeaderboard {
     padding: 5vw;
+}
+
+#aboutSection {
+    display: none;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    background-color: rgba(76, 112, 154, 1);
+}
+
+#aboutTitle {
+    padding-top: 15vh;
+    text-align: center;
+    color: white;
+    text-decoration: underline;
+}
+
+p > a {
+    color: lightgreen;
+}
+
+#aboutBody {
+    padding: 3vw;
+    font-size: 1.2rem;
+    color: white;
 }

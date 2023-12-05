@@ -1,11 +1,10 @@
 import { initializeApp } from 'firebase/app';
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  connectAuthEmulator, onAuthStateChanged, signOut,
 } from 'firebase/auth';
 
 import {
-  getDatabase, ref, set, get, connectDatabaseEmulator,
+  getDatabase, ref, set, get,
 } from 'firebase/database';
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -19,14 +18,17 @@ const firebaseConfig = {
   storageBucket: 'robust-tracker-399622.appspot.com',
   messagingSenderId: '568356302154',
   appId: '1:568356302154:web:f89365fccd0df7a2c3a5b3',
+  databaseURL: 'https://robust-tracker-399622-default-rtdb.firebaseio.com',
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getDatabase();
-connectAuthEmulator(auth, 'http://127.0.0.1:9099');
-connectDatabaseEmulator(db, '127.0.0.1', 9000);
+const db = getDatabase(app);
+
+// const db = getDatabase();
+// connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+// connectDatabaseEmulator(db, '127.0.0.1', 9000);
 
 // Sign in form submitTypeInput holds value of submitted method (sign in / register)
 const submitTypeInput = document.getElementById('submit-type');
@@ -41,7 +43,7 @@ document.getElementById('register-button').addEventListener('click', () => {
   submitTypeInput.value = 'register';
 });
 
-// Declaration of street view service, map, panorama, and guessMarker variables.
+// Declaration of street view service, map, panorama, guessMarker & locationMarker variables.
 let sv;
 let map;
 let panorama;
@@ -115,9 +117,8 @@ const guessButton = document.getElementById('guess-button');
 // Score overlay
 const scoreOverlay = document.getElementById('score-overlay');
 
-// Timer
+// Timer elements
 const timer = document.getElementById('timer');
-
 const timeRemaining = document.getElementById('time-remaining');
 let intervalId;
 
@@ -202,17 +203,15 @@ async function initialize() {
 }
 window.initialize = initialize;
 
-// Check if the randomly generated location is on land
+// Check if the randomly generated location is on land, returns a boolean
 async function isLandLocation(lat, lng) {
-  // Call the reverse geocoding API and check the response for the given location
+  // Call Google's reverse geocoding API and check the response for the given location
   const apiKey = 'AIzaSyD_UQT0nGeyyH6FeLdp9DhdjlfJfOK2m28';
   const response = await fetch(
     `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`,
   );
   const data = await response.json();
-  console.log(data);
   const isLand = data.results.length > 0 && (data.results[0].address_components.length > 1);
-  console.log(`isLand: ${isLand}`);
   return isLand;
 }
 
@@ -235,7 +234,7 @@ async function getRandomLocation() {
   return location;
 }
 
-// Find a panorama given a set of coordinates and a search radius
+// Find a panorama given LatLng object and a search radius
 async function processSVData(loc, rad) {
   return new Promise((resolve, reject) => {
     sv.getPanorama({ location: loc, radius: rad }, async (data, status) => {
@@ -323,6 +322,11 @@ function createLine(lat1, lon1, lat2, lon2) {
 
 const signOutLink = document.getElementById('signOutLink');
 
+/**
+ * Users have their high scores & total accumulated scores
+ *  uploaded to the leaderboard at the end of the game
+ *  (Requirement 3.2.2)
+ */
 function endSoloGame(scoreAccumulated) {
   updateUserScore(uid, scoreAccumulated);
   signOutLink.classList.remove('disabled');
@@ -348,6 +352,10 @@ function endSoloGame(scoreAccumulated) {
 
 let timeoutId;
 
+/**
+ *  Solo game function
+ *  (Requirement 3.3.3)
+ */
 async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Add the event listener to the make guess button
   // eslint-disable-next-line no-use-before-define
@@ -375,7 +383,10 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Obtain a panoramic view
   const locationData = await processSVData(location, 100);
 
-  // Display and reset timer
+  /**
+   * Display and reset timer
+   *  (Requirement 3.3.4)
+   */
   timer.style.display = 'block';
   stopTimer();
 
@@ -417,6 +428,10 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     scoreOverlay.style.display = 'block';
     // eslint-disable-next-line no-param-reassign
     scoreAccumulated += roundScore;
+    /**
+       * Users should see their score at the end of each round/game
+       *  (Requirement 3.2.1)
+       */
     roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
     // Move the map to the scoreOverlay
     scoreOverlay.appendChild(originalMap);
@@ -427,7 +442,6 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
 
     // Add the locationMarker and pan to it
     // eslint-disable-next-line no-undef
-    console.log(`placing marker 1`);
     locationMarker = new google.maps.Marker({
       position: location,
       map,
@@ -483,8 +497,11 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       roundScore = calculateScore(distance);
       // eslint-disable-next-line no-param-reassign
       scoreAccumulated += roundScore;
+      /**
+       * Users should see their score at the end of each round/game
+       *  (Requirement 3.2.1)
+       */
       roundScoreP.innerHTML = `Score for this round is <span style="color:purple">${roundScore}</span><br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
-
       scoreOverlay.appendChild(originalMap);
       originalMap.style.position = 'absolute';
       originalMap.style.top = '50%';
@@ -499,6 +516,10 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       map.panTo(locationMarker.position);
       distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
     } else {
+      /**
+       * Users should see their score at the end of each round/game
+       *  (Requirement 3.2.1)
+       */
       roundScoreP.innerHTML = `Guessing time ran out!<br>Your overall score is <span style="color:purple">${scoreAccumulated}</span>`;
       scoreOverlay.appendChild(originalMap);
       originalMap.style.position = 'absolute';
@@ -549,12 +570,12 @@ const gameModeTypeInput = document.getElementById('mode-type');
 const signInForm = document.getElementById('sign-in-form');
 const gameModeForm = document.getElementById('game-mode-form');
 
-// Get the buttons
+// Get the buttons in the game mode form
 const normalDiffButton = document.getElementById('normal-diff');
 const hardDiffButton = document.getElementById('hard-diff');
 const expertDiffButton = document.getElementById('expert-diff');
 
-// Event listener functions for the buttons
+// Event listener functions for the buttons from game mode form
 function handleNormalDiff() {
   gameModeTypeInput.value = 'normal-solo';
 }
@@ -575,35 +596,51 @@ function handleSubmit(event) {
     gameModeForm.removeEventListener('submit', handleSubmit);
   }
   event.preventDefault();
-  console.log(gameModeTypeInput.value);
+
+  // Get the user selected difficulty
   const gameMode = gameModeTypeInput.value;
-  let roundDuration;
 
   // Hide the game mode form
   gameModeForm.style.display = 'none';
 
+  let roundDuration;
   // Determine round duration for the solo game mode & handle case for multiplayer modes selection
   switch (gameMode) {
     case 'normal-solo':
+      /**
+       * Normal has 2 minutes to guess
+       *  (Requirement 3.4.1)
+       */
       roundDuration = 120;
       playSoloGame(roundDuration, 1, 0);
       break;
     case 'hard-solo':
+      /**
+       * Hard has 1 minute to guess
+       *  (Requirement 3.4.2)
+       */
       roundDuration = 60;
       playSoloGame(roundDuration, 1, 0);
       break;
     case 'expert-solo':
+      /**
+       * Expert has 30 seconds to guess
+       *  (Requirement 3.4.3)
+       */
       roundDuration = 30;
       playSoloGame(roundDuration, 1, 0);
       break;
     default:
       break;
   }
-  // Remove the event listeners to avoid multiple copies of the same listeners
+  // Remove the event listeners to prevent multiple copies of the same listeners
   removeEventListeners();
 }
 
-// Get user selected game mode
+/**
+  * Get user selected difficulty level
+  *  (Requirement 3.3.1)
+  */
 function getGamemode() {
   // Hide auth container and display the game mode selection form
   signInForm.style.display = 'none';
@@ -652,7 +689,11 @@ signInForm.addEventListener('submit', (event) => {
         console.log(errorMessage);
       });
 
-  // Case of register being pressed
+  /**
+   * Register button was pressed
+   * User should be uniquely identifiable
+   *  (Requirement 3.1.1)
+   */
   } else if (submitTypeInput.value === 'register') {
     createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
       .then((userCredential) => {
@@ -683,6 +724,12 @@ const leaderboardLink = document.getElementById('leaderboardLink');
 // Leaderboard section
 const leaderboardSection = document.getElementById('leaderboardSection');
 
+// About section
+const aboutSection = document.getElementById('aboutSection');
+
+// About link in navbar
+const aboutLink = document.getElementById('aboutLink');
+
 // Project title link in navbar
 const projectTitleLink = document.getElementById('projectTitle');
 
@@ -692,6 +739,7 @@ async function populateLeaderboard() {
   const topScoresTable = document.querySelector('#topScoresLeaderboard tbody');
   const accumulatedScoresTable = document.querySelector('#accumulatedScoresLeaderboard tbody');
 
+  // If user is not authenticated, clear the leaderboard
   if (!uid) {
     topScoresTable.innerHTML = '';
     accumulatedScoresTable.innerHTML = '';
@@ -742,10 +790,13 @@ async function populateLeaderboard() {
   }
 }
 
-// Hide leaderboard when project title is clicked
+// Hide leaderboard/about section when project title is clicked
 projectTitleLink.addEventListener('click', () => {
   if (leaderboardSection.style.display === 'block') {
     leaderboardSection.style.display = 'none';
+  }
+  if (aboutSection.style.display === 'block') {
+    aboutSection.style.display = 'none';
   }
 });
 
@@ -759,6 +810,19 @@ leaderboardLink.addEventListener('click', () => {
   }
 });
 
+// Shows the about section and hides it if it's already displayed.
+aboutLink.addEventListener('click', () => {
+  if (aboutSection.style.display === 'none') {
+    aboutSection.style.display = 'block';
+  } else {
+    aboutSection.style.display = 'none';
+  }
+});
+
+/**
+ * Users should be able to sign out
+ *  (Requirement 3.1.3)
+ */
 function handleSignOut() {
   auth.signOut();
   uid = undefined;

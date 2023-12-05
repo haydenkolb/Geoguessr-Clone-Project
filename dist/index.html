@@ -140,7 +140,7 @@
                 <p>
                     Welcome to our <a href="https://www.geoguessr.com/" target="_blank">Geoguessr</a>-inspired project!
                     We are not affiliated with the official game, but our project aims to recreate the experience
-                    players have while playing Geoguessr, a popular and intriguing geography guessing game.
+                    players have while playing Geoguessr, a popular and intriguing geography guessing web game.
                 </p>
                 <p>
                     Test your knowledge of geography as you are placed in random locations from all around the world.
@@ -148,19 +148,31 @@
                     along with our random location generator, you may find yourself in some instantly recognizable locations or perhaps in some of the most
                     remote locations on Earth while playing our game!
                 </p>
-                <h2>
+                <h2 class="text-center">
                     How to Play
                 </h2>
                 <p>
                     Once you've registered an account or have signed in to an existing account, you can choose from three difficulty levels:
-                    <b><span style="color:green">Easy</span> <span style="color:yellow">Medium</span> or <span style="color:red">Hard</span></b>.
+                    <b><span style="color:green">Easy</span>, <span style="color:yellow">Medium</span> or <span style="color:red">Hard</span></b>.
                     Each game is 5 rounds long with a new location generated for each round.
                     Increasing the difficulty level reduces the time you have to guess your location during each round. Here are the guessing times below:
+                    <h4>
+                        Guessing Times
+                    </h4>
                     <ul>
-                        <li><b><span style="color:green">Easy</span></b> : 2:00 </li>
-                        <li><b><span style="color:yellow">Medium</span></b> : 1:00 </li>
-                        <li><b><span style="color:red">Hard</span></b> : 0:30 </li>
+                        <li><b><span style="color:green">Easy</span></b> : 2 minutes. </li>
+                        <li><b><span style="color:yellow">Medium</span></b> : 1 minute. </li>
+                        <li><b><span style="color:red">Hard</span></b> : 30 seconds. </li>
                     </ul>
+                </p>
+                <p>
+                    Once the street view image has loaded, your guessing time begins and a timer at the top of the screen displays how much time is left.
+                    To make a guess, simply click a location on the map located in the bottom right hand corner and press the button that says 'Make Guess'.
+                    Your guess is denoted by the marker with this icon: <img src="icons/map-marker.png" width="30" height="30" class="d-inline-block align-top" alt="">.
+                    Once you've guessed, you'll be given a score reflecting the closeness of your guess to the actual location.
+                    The max score achievable per round is 5000. Therefore, the maximum score possible for a game is 25000.
+                    Once you've finished all 5 rounds, your score will be uploaded to our leaderboard where all users can see.
+                    Good luck, and have fun!
                 </p>
             </div>
         </div>

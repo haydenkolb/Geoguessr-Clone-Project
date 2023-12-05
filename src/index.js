@@ -70,11 +70,9 @@ async function updateUserScore(uid, score) {
   // Retrieve the user's topScore and accumulatedScore
   await get(topScoreRef).then((snapshot) => {
     topScore = snapshot.val();
-    console.log(topScore);
   });
   await get(accumulatedScoreRef).then((snapshot) => {
     accumulatedScore = snapshot.val();
-    console.log(accumulatedScore);
   });
 
   // If the user's score for this game is greater than the user's topScore, update topScore
@@ -148,7 +146,6 @@ function startTimer(roundDuration, onEnd) {
 // Function stops the timer
 function stopTimer() {
   if (intervalId !== undefined) {
-    console.log(`Stopping timer ${intervalId}`);
     clearInterval(intervalId);
     intervalId = undefined;
   }
@@ -171,8 +168,6 @@ function placeGuessMarker(latLng) {
     map,
     icon: 'icons/map-marker.png',
   });
-  console.log(`Guess marker lat: ${latLng.lat()}`);
-  console.log(`Guess marker lng: ${latLng.lng()}`);
   guessLat = latLng.lat();
   guessLng = latLng.lng();
 }
@@ -238,14 +233,12 @@ async function getRandomLocation() {
 async function processSVData(loc, rad) {
   return new Promise((resolve, reject) => {
     sv.getPanorama({ location: loc, radius: rad }, async (data, status) => {
-      console.log(status);
       // eslint-disable-next-line no-undef
       if (status === google.maps.StreetViewStatus.ZERO_RESULTS) {
         // If there are no panoramic street views at this spot, retry with a higher radius
         resolve(await processSVData(loc, rad * 10));
       // eslint-disable-next-line no-undef
       } else if (status === google.maps.StreetViewStatus.OK) {
-        console.log(data);
         // A panoramic street view was found, create the panorama & send the updated coordinates
         const newLatLng = data.location.latLng;
         newLat = newLatLng.lat();
@@ -361,7 +354,6 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // eslint-disable-next-line no-use-before-define
   guessButton.addEventListener('click', handleGuessClick);
   signOutLink.classList.add('disabled');
-  console.log(`playSoloGame called with roundDuration, round, scoreAccumulated\n ${roundDuration} , ${round} , ${scoreAccumulated}`);
 
   // Display the map and panorama
   resetMap();
@@ -678,7 +670,6 @@ signInForm.addEventListener('submit', (event) => {
         // Signed in user
         const { user } = userCredential;
         uid = user.uid;
-        console.log('Signed in user', user);
         signOutLink.style.display = 'block';
 
         // Get user entered gamemode
@@ -686,7 +677,7 @@ signInForm.addEventListener('submit', (event) => {
       })
       .catch((error) => {
         const errorMessage = error.message;
-        console.log(errorMessage);
+        console.error(errorMessage);
       });
 
   /**
@@ -700,7 +691,6 @@ signInForm.addEventListener('submit', (event) => {
         // Newly registered user signed up
         const { user } = userCredential;
         uid = user.uid;
-        console.log('Registered user', user);
         signOutLink.style.display = 'block';
         // Set user email
         set(ref(db, `leaderboard/${user.uid}/email/`), emailInput.value);
@@ -713,7 +703,7 @@ signInForm.addEventListener('submit', (event) => {
       })
       .catch((error) => {
         const errorMessage = error.message;
-        console.log(errorMessage);
+        console.error(errorMessage);
       });
   }
 });
@@ -803,6 +793,9 @@ projectTitleLink.addEventListener('click', () => {
 // Show leaderboard and populate, if authenticated, when leaderboard nav link is clicked
 leaderboardLink.addEventListener('click', () => {
   if (leaderboardSection.style.display === 'none') {
+    if (aboutSection.style.display === 'block') {
+      aboutSection.style.display = 'none';
+    }
     leaderboardSection.style.display = 'block';
     populateLeaderboard();
   } else {
@@ -813,6 +806,9 @@ leaderboardLink.addEventListener('click', () => {
 // Shows the about section and hides it if it's already displayed.
 aboutLink.addEventListener('click', () => {
   if (aboutSection.style.display === 'none') {
+    if (leaderboardSection.style.display === 'block') {
+      leaderboardSection.style.display = 'none';
+    }
     aboutSection.style.display = 'block';
   } else {
     aboutSection.style.display = 'none';

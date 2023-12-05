@@ -191,7 +191,7 @@ body {
 }
 
 #aboutTitle {
-    padding-top: 15vh;
+    padding-top: 8vh;
     text-align: center;
     color: white;
     text-decoration: underline;
@@ -205,4 +205,6 @@ p > a {
     padding: 3vw;
     font-size: 1.2rem;
     color: white;
+    background-color: rgba(76, 112, 154, 1);
+    
 }

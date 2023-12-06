@@ -26,6 +26,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+// Local uid variable
+let uid;
+
 // const db = getDatabase();
 // connectAuthEmulator(auth, 'http://127.0.0.1:9099');
 // connectDatabaseEmulator(db, '127.0.0.1', 9000);
@@ -58,7 +61,7 @@ let guessLng;
 let line;
 
 // Update user's score
-async function updateUserScore(uid, score) {
+async function updateUserScore(score) {
   // References to the database
   const topScoreRef = ref(db, `leaderboard/${uid}/topScore`);
   const accumulatedScoreRef = ref(db, `leaderboard/${uid}/accumulatedScore`);
@@ -206,11 +209,12 @@ async function isLandLocation(lat, lng) {
     `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`,
   );
   const data = await response.json();
+  // A response with length > 0 and address_components length > 1 is typically on land
   const isLand = data.results.length > 0 && (data.results[0].address_components.length > 1);
   return isLand;
 }
 
-// Generates a random set of coordinates and creates a LatLng location
+// Generates a random set of coordinates that are on land and creates a LatLng location
 async function getRandomLocation() {
   const minLat = -90; // Minimum latitude
   const maxLat = 90; // Maximum latitude
@@ -218,7 +222,7 @@ async function getRandomLocation() {
   const maxLng = 180; // Maximum longitude
   let randomLat;
   let randomLng;
-  // Generate a location that is on land
+  // Keep generating a location that until it is on land
   do {
     randomLat = Math.random() * (maxLat - minLat) + minLat;
     randomLng = Math.random() * (maxLng - minLng) + minLng;
@@ -229,7 +233,7 @@ async function getRandomLocation() {
   return location;
 }
 
-// Find a panorama given LatLng object and a search radius
+// Find a panorama given a LatLng object and a search radius
 async function processSVData(loc, rad) {
   return new Promise((resolve, reject) => {
     sv.getPanorama({ location: loc, radius: rad }, async (data, status) => {
@@ -343,8 +347,6 @@ function endSoloGame(scoreAccumulated) {
   playAgainButton.addEventListener('touchstart', handlePlayAgain);
 }
 
-let timeoutId;
-
 /**
  *  Solo game function
  *  (Requirement 3.3.3)
@@ -442,7 +444,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
     distanceP.innerHTML = `Guess was <span style="color:purple">${Math.round(distance)}</span> km away from the location`;
 
     // After 5 second intermission between rounds, reset the page and play next round
-    timeoutId = setTimeout(() => {
+    setTimeout(() => {
       scoreOverlay.style.display = 'none';
       timer.style.display = 'block';
       line.setMap(null);
@@ -461,6 +463,10 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       originalMap.style.bottom = initialPosition.bottom;
       originalMap.style.right = initialPosition.right;
 
+      /**
+       * Each game should last for 5 rounds
+       *  (Requirement 3.3.2)
+       */
       if (round < MAX_ROUNDS) {
         playSoloGame(roundDuration, round + 1, scoreAccumulated);
       } else {
@@ -527,7 +533,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       distanceP.innerHTML = '';
     }
     // After 5 second intermission between rounds, reset the page and play next round
-    timeoutId = setTimeout(() => {
+    setTimeout(() => {
       scoreOverlay.style.display = 'none';
       timer.style.display = 'block';
       gameContainer.appendChild(originalMap);
@@ -548,6 +554,10 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
       originalMap.style.bottom = initialPosition.bottom;
       originalMap.style.right = initialPosition.right;
 
+      /**
+       * Each game should last for 5 rounds
+       *  (Requirement 3.3.2)
+       */
       if (round < MAX_ROUNDS) {
         playSoloGame(roundDuration, round + 1, scoreAccumulated);
       } else {
@@ -652,9 +662,10 @@ function getGamemode() {
   gameModeForm.addEventListener('submit', handleSubmit);
 }
 
-// Local uid variable
-let uid;
-
+/**
+ * Users should be authenticated by registering or signing in
+ *  (Requirement 3.1.2)
+ */
 // Handle submit event from signInForm
 signInForm.addEventListener('submit', (event) => {
   // Preventing page refresh
@@ -681,10 +692,10 @@ signInForm.addEventListener('submit', (event) => {
       });
 
   /**
-   * Register button was pressed
    * User should be uniquely identifiable
    *  (Requirement 3.1.1)
    */
+  // Register button was pressed
   } else if (submitTypeInput.value === 'register') {
     createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
       .then((userCredential) => {
@@ -723,6 +734,10 @@ const aboutLink = document.getElementById('aboutLink');
 // Project title link in navbar
 const projectTitleLink = document.getElementById('projectTitle');
 
+/**
+ * A leaderboard should be provided for users to check their scores, once authenticated
+ *  (Requirements 3.5.1 & 3.5.2)
+ */
 // Populate's the leaderboard in decreasing order
 async function populateLeaderboard() {
   // Get the leaderboard tables

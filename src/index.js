@@ -156,15 +156,16 @@ function stopTimer() {
 
 // Places a marker on the guessing map when clicked
 function placeGuessMarker(latLng) {
-  // If a marker has been placed already, get rid of it and create a new marker.
+  // Display the guess button
   if (guessButton.style.display !== 'block') {
     guessButton.style.display = 'block';
   }
+  // If a marker has been placed already, get rid of it.
   if (guessMarker !== undefined) {
     guessMarker.setMap(null);
     guessMarker = undefined;
   }
-  // Place a new marker on the guessing map
+  // Place a new marker on the guessing map at the location of the click
   // eslint-disable-next-line no-undef
   guessMarker = new google.maps.Marker({
     position: latLng,
@@ -287,14 +288,14 @@ const initialPosition = {
   right: originalMap.style.right,
 };
 
-// Reset map function recenters the map
+// Reset map function recenters the map and resets the zoom level
 function resetMap() {
   const center = { lat: 0, lng: 0 };
   map.setCenter(center);
   map.setZoom(1);
 }
 
-// Creates a line on the map after guess
+// Creates a line between the guess and actual location on the map after user has guessed
 function createLine(lat1, lon1, lat2, lon2) {
   const lineCoordinates = [{ lat: lat1, lng: lon1 }, { lat: lat2, lng: lon2 }];
   const lineSymbol = {
@@ -326,7 +327,11 @@ const signOutLink = document.getElementById('signOutLink');
  */
 function endSoloGame(scoreAccumulated) {
   updateUserScore(uid, scoreAccumulated);
+
+  // Enable signing out
   signOutLink.classList.remove('disabled');
+
+  // Hide the timer, guess button and map and display the play again button
   timer.style.display = 'none';
   guessButton.style.display = 'none';
   scoreOverlay.style.display = 'block';
@@ -334,7 +339,10 @@ function endSoloGame(scoreAccumulated) {
   distanceP.innerHTML = '';
   playAgainButton.style.display = 'block';
 
+  // Display the user's score
   roundScoreP.innerHTML = `Game over.<br>Your score for this game is <span style="color:purple">${scoreAccumulated}</span>`;
+
+  // Function allows user to play a new game
   function handlePlayAgain() {
     scoreOverlay.style.display = 'none';
     playAgainButton.style.display = 'none';
@@ -355,6 +363,8 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Add the event listener to the make guess button
   // eslint-disable-next-line no-use-before-define
   guessButton.addEventListener('click', handleGuessClick);
+
+  // Disable signing out to prevent errors
   signOutLink.classList.add('disabled');
 
   // Display the map and panorama
@@ -374,7 +384,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   // Generate a new location
   const location = await getRandomLocation();
 
-  // Obtain a panoramic view
+  // Obtain a panoramic view given the location and with an initial radius of 100
   const locationData = await processSVData(location, 100);
 
   /**
@@ -455,6 +465,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
         guessMarker.setMap(null);
         guessMarker = undefined;
       }
+      // Reset map to initial position
       gameContainer.appendChild(originalMap);
       originalMap.style.position = initialPosition.position;
       originalMap.style.top = initialPosition.top;
@@ -547,6 +558,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
         guessMarker.setMap(null);
         guessMarker = undefined;
       }
+      // Reset map to initial position
       originalMap.style.position = initialPosition.position;
       originalMap.style.top = initialPosition.top;
       originalMap.style.left = initialPosition.left;
@@ -569,6 +581,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
 // Game mode selection form gameModeTypeInput holds value of submitted game type
 const gameModeTypeInput = document.getElementById('mode-type');
 
+// Get the signInForm and gameModeForm from the page
 const signInForm = document.getElementById('sign-in-form');
 const gameModeForm = document.getElementById('game-mode-form');
 
@@ -635,7 +648,7 @@ function handleSubmit(event) {
     default:
       break;
   }
-  // Remove the event listeners to prevent multiple copies of the same listeners
+  // Remove the event listeners to prevent duplicates from being created
   removeEventListeners();
 }
 
@@ -744,7 +757,7 @@ async function populateLeaderboard() {
   const topScoresTable = document.querySelector('#topScoresLeaderboard tbody');
   const accumulatedScoresTable = document.querySelector('#accumulatedScoresLeaderboard tbody');
 
-  // If user is not authenticated, clear the leaderboard
+  // If user is not authenticated, clear the leaderboard and return
   if (!uid) {
     topScoresTable.innerHTML = '';
     accumulatedScoresTable.innerHTML = '';
@@ -835,12 +848,17 @@ aboutLink.addEventListener('click', () => {
  *  (Requirement 3.1.3)
  */
 function handleSignOut() {
+  // Sign out the user
   auth.signOut();
   uid = undefined;
+
+  // Remove event listeners to prevent duplicates from being created
   normalDiffButton.removeEventListener('click', handleNormalDiff);
   hardDiffButton.removeEventListener('click', handleHardDiff);
   expertDiffButton.removeEventListener('click', handleExpertDiff);
   gameModeForm.removeEventListener('submit', handleSubmit);
+
+  // Clear other pages and display the authentication page
   gameModeForm.style.display = 'none';
   mapDiv.style.display = 'none';
   panoramaDiv.style.display = 'none';

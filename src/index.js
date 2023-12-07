@@ -7,10 +7,7 @@ import {
   getDatabase, ref, set, get,
 } from 'firebase/database';
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+// Web app's Firebase configuration
 const firebaseConfig = {
   apiKey: 'AIzaSyD_UQT0nGeyyH6FeLdp9DhdjlfJfOK2m28',
   authDomain: 'robust-tracker-399622.firebaseapp.com',
@@ -21,17 +18,13 @@ const firebaseConfig = {
   databaseURL: 'https://robust-tracker-399622-default-rtdb.firebaseio.com',
 };
 
-// Initialize Firebase
+// Initialize Firebase, auth, and the database
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
 // Local uid variable
 let uid;
-
-// const db = getDatabase();
-// connectAuthEmulator(auth, 'http://127.0.0.1:9099');
-// connectDatabaseEmulator(db, '127.0.0.1', 9000);
 
 // Sign in form submitTypeInput holds value of submitted method (sign in / register)
 const submitTypeInput = document.getElementById('submit-type');
@@ -53,11 +46,15 @@ let panorama;
 let guessMarker;
 let locationMarker;
 
-// Declaration of latitude and longitude variables, and line variable
+// The actual LatLng values for the location after processSVData is called
 let newLat;
 let newLng;
+
+// The guess LatLng values given by the user
 let guessLat;
 let guessLng;
+
+// Line variable used for the map after a guess was made
 let line;
 
 // Update user's score
@@ -91,6 +88,7 @@ function calculateScore(distance) {
   const maxScore = 5000;
   const maxDistance = 5000;
 
+  // Use a linear function for scoring based on maxScore & maxDistance
   const score = maxScore * (1 - distance / maxDistance);
   return Math.max(0, Math.round(score));
 }
@@ -140,6 +138,7 @@ function startTimer(roundDuration, onEnd) {
 
     if (time <= 0) {
       clearInterval(intervalId);
+      // Call the callback function once time runs out
       onEnd();
     }
     time -= 1;
@@ -172,6 +171,7 @@ function placeGuessMarker(latLng) {
     map,
     icon: 'icons/map-marker.png',
   });
+  // Set the new guess latitude and longitude values
   guessLat = latLng.lat();
   guessLng = latLng.lng();
 }

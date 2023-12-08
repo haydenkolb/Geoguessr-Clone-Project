@@ -256,6 +256,7 @@ async function processSVData(loc, rad) {
         panorama.setVisible(true);
         resolve({ newLat, newLng });
       } else {
+        // eslint-disable-next-line no-console
         console.error('Error getting panoramic street view');
         reject(new Error('Error getting panoramic street view'));
       }
@@ -395,9 +396,7 @@ async function playSoloGame(roundDuration, round, scoreAccumulated) {
   stopTimer();
 
   // Store latitude and logitude of the actual location for placing locationMarker
-  // eslint-disable-next-line no-unused-vars
   const latitude = locationData.newLat;
-  // eslint-disable-next-line no-unused-vars
   const longitude = locationData.newLng;
 
   // Add click event listener for placing guess marker & display the 'Make Guess' button
@@ -701,6 +700,7 @@ signInForm.addEventListener('submit', (event) => {
       })
       .catch((error) => {
         const errorMessage = error.message;
+        // eslint-disable-next-line no-console
         console.error(errorMessage);
       });
 
@@ -727,6 +727,7 @@ signInForm.addEventListener('submit', (event) => {
       })
       .catch((error) => {
         const errorMessage = error.message;
+        // eslint-disable-next-line no-console
         console.error(errorMessage);
       });
   }
@@ -781,8 +782,10 @@ async function populateLeaderboard() {
 
     // Copy & sort the leaderboardData array for topScores and accumulatedScores in decreasing order
     const topScoreSortedData = [...leaderboardData].sort((a, b) => b.topScore - a.topScore);
-    // eslint-disable-next-line max-len
-    const accumulatedScoreSortedData = [...leaderboardData].sort((a, b) => b.accumulatedScore - a.accumulatedScore);
+
+    const accumulatedScoreSortedData = [...leaderboardData].sort(
+      (a, b) => b.accumulatedScore - a.accumulatedScore,
+    );
 
     // Reset the leaderboards
     topScoresTable.innerHTML = '';
@@ -804,6 +807,7 @@ async function populateLeaderboard() {
       count += 1;
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error fetching leaderboard data:', error);
   }
 }

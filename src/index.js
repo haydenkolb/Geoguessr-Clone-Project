@@ -328,7 +328,7 @@ const signOutLink = document.getElementById('signOutLink');
  *  (Requirement 3.2.2)
  */
 function endSoloGame(scoreAccumulated) {
-  updateUserScore(uid, scoreAccumulated);
+  updateUserScore(scoreAccumulated);
 
   // Enable signing out
   signOutLink.classList.remove('disabled');

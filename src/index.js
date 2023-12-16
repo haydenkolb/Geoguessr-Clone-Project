@@ -80,7 +80,8 @@ async function updateUserScore(score) {
     set(topScoreRef, score);
   }
   // Update user's accumulatedScore
-  set(accumulatedScoreRef, accumulatedScore + score);
+  const newScore = accumulatedScore + score;
+  set(accumulatedScoreRef, newScore);
 }
 
 // Calculate the score given the distance from the location
@@ -693,6 +694,7 @@ signInForm.addEventListener('submit', (event) => {
         // Signed in user
         const { user } = userCredential;
         uid = user.uid;
+        auth.uid = uid;
         signOutLink.style.display = 'block';
 
         // Get user entered gamemode
@@ -715,6 +717,7 @@ signInForm.addEventListener('submit', (event) => {
         // Newly registered user signed up
         const { user } = userCredential;
         uid = user.uid;
+        auth.uid = uid;
         signOutLink.style.display = 'block';
         // Set user email
         set(ref(db, `leaderboard/${user.uid}/email/`), emailInput.value);
@@ -782,7 +785,6 @@ async function populateLeaderboard() {
 
     // Copy & sort the leaderboardData array for topScores and accumulatedScores in decreasing order
     const topScoreSortedData = [...leaderboardData].sort((a, b) => b.topScore - a.topScore);
-
     const accumulatedScoreSortedData = [...leaderboardData].sort(
       (a, b) => b.accumulatedScore - a.accumulatedScore,
     );

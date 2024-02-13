@@ -1,5 +1,9 @@
 # Geoguessr-Clone-Project
 
+## Link to the project
+
+https://haydenkolb.github.io/Geoguessr-Clone-Project/dist/index.html
+
 ## Project Structure
 
 ### dist Folder
